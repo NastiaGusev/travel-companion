@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: travel-postgres
+    environment:
+      POSTGRES_DB: travel
+      POSTGRES_USER: travel
+      POSTGRES_PASSWORD: travel
+    ports:
+      - "5432:5432"
+    volumes:
+      - travel-pgdata:/var/lib/postgresql/data
+
+volumes:
+  travel-pgdata:
+
+
