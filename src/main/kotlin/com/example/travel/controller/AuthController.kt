@@ -5,9 +5,10 @@ import com.example.travel.dto.LoginRequest
 import com.example.travel.dto.RegisterRequest
 import com.example.travel.service.AuthService
 import jakarta.validation.Valid
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/auth")
@@ -15,10 +16,8 @@ class AuthController(
     private val authService: AuthService,
 ) {
     @PostMapping("/register")
-    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<Map<String, Long>> {
-        val user = authService.register(request)
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapOf("id" to user.id!!))
-    }
+    fun register(@Valid @RequestBody request: RegisterRequest): AuthResponse =
+        AuthResponse(token = authService.register(request))
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody request: LoginRequest): AuthResponse =

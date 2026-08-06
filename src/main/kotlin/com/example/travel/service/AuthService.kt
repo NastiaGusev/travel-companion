@@ -14,7 +14,7 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService
 ) {
-    fun register(request: RegisterRequest): User {
+    fun register(request: RegisterRequest): String {
         if (userRepository.findByEmail(request.email) != null) {
             throw IllegalArgumentException("Email already registered")
         }
@@ -23,7 +23,8 @@ class AuthService(
             passwordHash = passwordEncoder.encode(request.password) ?: "",
             displayName = request.displayName,
         )
-        return userRepository.save(user)
+        val saved = userRepository.save(user)
+        return jwtService.generateToken(saved.id!!, saved.email)
     }
 
     fun login(request: LoginRequest): String {
