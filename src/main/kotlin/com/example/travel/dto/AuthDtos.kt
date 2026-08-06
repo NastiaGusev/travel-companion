@@ -19,3 +19,12 @@ data class RegisterRequest(
 data class AuthResponse(
     val token: String,
 )
+
+data class LoginRequest(
+    @field:Email
+    @field:NotBlank
+    val email: String,
+
+    @field:NotBlank
+    val password: String,
+)

@@ -1,14 +1,19 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/travel
-    username: travel
-    password: travel
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: true
   flyway:
     enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 3600000
 
 management:
   endpoints:

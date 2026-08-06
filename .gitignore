@@ -40,5 +40,5 @@ out/
 .kotlin
 
 ### Secrets ###
- *.env
- .env
+*.env
+.env
