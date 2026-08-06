@@ -18,4 +18,8 @@ class GlobalExceptionHandler {
         val errors = ex.bindingResult.fieldErrors.associate { it.field to it.defaultMessage }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors)
     }
+
+    @ExceptionHandler(NoSuchElementException::class)
+    fun handleNotFound(ex: NoSuchElementException): ResponseEntity<Map<String, String?>> =
+        ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to ex.message))
 }
