@@ -2,6 +2,7 @@ package com.example.travel.dto
 
 import jakarta.validation.constraints.NotBlank
 import java.time.LocalDate
+import java.util.UUID
 
 data class TripRequest(
     @field:NotBlank
@@ -13,7 +14,7 @@ data class TripRequest(
 )
 
 data class TripResponse(
-    val id: Long,
+    val id: UUID,
     val title: String,
     val destination: String?,
     val startDate: LocalDate?,

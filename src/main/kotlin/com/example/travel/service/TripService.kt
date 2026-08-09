@@ -9,13 +9,14 @@ import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 @Service
 class TripService(
     private val tripRepository: TripRepository,
     private val dayRepository: ItineraryDayRepository,
 ) {
-    fun create(userId: Long, request: TripRequest): TripResponse {
+    fun create(userId: UUID, request: TripRequest): TripResponse {
         validateDates(request.startDate, request.endDate)
         val trip = Trip(
             userId = userId,
@@ -28,20 +29,20 @@ class TripService(
         return tripRepository.save(trip).toResponse()
     }
 
-    fun listForUser(userId: Long): List<TripResponse> =
+    fun listForUser(userId: UUID): List<TripResponse> =
         tripRepository.findByUserId(userId).map { it.toResponse() }
 
-    fun getForUser(id: Long, userId: Long): TripResponse =
+    fun getForUser(id: UUID, userId: UUID): TripResponse =
         tripRepository.findByIdAndUserId(id, userId)?.toResponse()
             ?: throw NoSuchElementException("Trip not found")
 
-    fun deleteForUser(id: Long, userId: Long) {
+    fun deleteForUser(id: UUID, userId: UUID) {
         val trip = tripRepository.findByIdAndUserId(id, userId)
             ?: throw NoSuchElementException("Trip not found")
         tripRepository.delete(trip)
     }
 
-    fun update(userId: Long, id: Long, request: TripRequest): TripResponse {
+    fun update(userId: UUID, id: UUID, request: TripRequest): TripResponse {
         val trip = tripRepository.findByIdAndUserId(id, userId)
             ?: throw NoSuchElementException("Trip not found")
         validateDates(request.startDate, request.endDate)

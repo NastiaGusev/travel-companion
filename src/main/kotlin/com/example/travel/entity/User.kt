@@ -1,7 +1,9 @@
 package com.example.travel.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.UuidGenerator
 import java.time.OffsetDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "users")
@@ -16,8 +18,10 @@ class User(
     var displayName: String? = null,
 ) {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null
+    @GeneratedValue
+    @UuidGenerator
+    @Column(columnDefinition = "uuid")
+    var id: UUID? = null
 
     @Column(name = "created_at", nullable = false)
     var createdAt: OffsetDateTime = OffsetDateTime.now()

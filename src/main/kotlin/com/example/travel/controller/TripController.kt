@@ -7,6 +7,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/trips")
@@ -16,31 +17,31 @@ class TripController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        @AuthenticationPrincipal userId: Long,
+        @AuthenticationPrincipal userId: UUID,
         @Valid @RequestBody request: TripRequest,
     ): TripResponse = tripService.create(userId, request)
 
     @GetMapping
-    fun list(@AuthenticationPrincipal userId: Long): List<TripResponse> =
+    fun list(@AuthenticationPrincipal userId: UUID): List<TripResponse> =
         tripService.listForUser(userId)
 
     @GetMapping("/{id}")
     fun get(
-        @AuthenticationPrincipal userId: Long,
-        @PathVariable id: Long,
+        @AuthenticationPrincipal userId: UUID,
+        @PathVariable id: UUID,
     ): TripResponse = tripService.getForUser(id, userId)
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(
-        @AuthenticationPrincipal userId: Long,
-        @PathVariable id: Long,
+        @AuthenticationPrincipal userId: UUID,
+        @PathVariable id: UUID,
     ) = tripService.deleteForUser(id, userId)
 
     @PutMapping("/{id}")
     fun update(
-        @AuthenticationPrincipal userId: Long,
-        @PathVariable id: Long,
+        @AuthenticationPrincipal userId: UUID,
+        @PathVariable id: UUID,
         @Valid @RequestBody request: TripRequest,
     ): TripResponse = tripService.update(userId, id, request)
 }

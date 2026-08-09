@@ -1,14 +1,16 @@
 package com.example.travel.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.UuidGenerator
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "trips")
 class Trip(
     @Column(name = "user_id", nullable = false)
-    var userId: Long,
+    var userId: UUID,
 
     @Column(nullable = false)
     var title: String,
@@ -25,8 +27,10 @@ class Trip(
     var description: String? = null,
 ) {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null
+    @GeneratedValue
+    @UuidGenerator
+    @Column(columnDefinition = "uuid")
+    var id: UUID? = null
 
     @Column(name = "created_at", nullable = false)
     var createdAt: OffsetDateTime = OffsetDateTime.now()
