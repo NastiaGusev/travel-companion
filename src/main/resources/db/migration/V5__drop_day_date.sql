@@ -1,0 +1,1 @@
+ALTER TABLE itinerary_days DROP COLUMN day_date;

@@ -3,14 +3,17 @@ package com.example.travel.service
 import com.example.travel.dto.TripRequest
 import com.example.travel.dto.TripResponse
 import com.example.travel.entity.Trip
+import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.TripRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 
 @Service
 class TripService(
     private val tripRepository: TripRepository,
+    private val dayRepository: ItineraryDayRepository,
 ) {
     fun create(userId: Long, request: TripRequest): TripResponse {
         validateDates(request.startDate, request.endDate)
@@ -42,6 +45,19 @@ class TripService(
         val trip = tripRepository.findByIdAndUserId(id, userId)
             ?: throw NoSuchElementException("Trip not found")
         validateDates(request.startDate, request.endDate)
+
+        // If dates are being set/shrunk, ensure the existing day count still fits
+        if (request.startDate != null && request.endDate != null) {
+            val newLength = ChronoUnit.DAYS.between(request.startDate, request.endDate).toInt() + 1
+            val existingDayCount = dayRepository.findByTripId(id).size
+            if (existingDayCount > newLength) {
+                throw IllegalArgumentException(
+                    "Cannot shorten this trip to $newLength day(s): it has $existingDayCount day(s). " +
+                            "Delete the extra days first, then adjust the trip."
+                )
+            }
+        }
+
         trip.title = request.title
         trip.destination = request.destination
         trip.startDate = request.startDate

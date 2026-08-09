@@ -1,7 +1,6 @@
 package com.example.travel.entity
 
 import jakarta.persistence.*
-import java.time.LocalDate
 import java.time.OffsetDateTime
 
 @Entity
@@ -12,9 +11,6 @@ class ItineraryDay(
 
     @Column(name = "day_number", nullable = false)
     var dayNumber: Int,
-
-    @Column(name = "day_date")
-    var dayDate: LocalDate? = null,
 
     @Column(columnDefinition = "TEXT")
     var notes: String? = null,

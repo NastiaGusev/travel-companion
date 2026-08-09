@@ -28,9 +28,8 @@ class ItineraryDayController(
     ): List<DayResponse> = dayService.listForTrip(userId, tripId)
 
     @DeleteMapping("/days/{dayId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(
         @AuthenticationPrincipal userId: Long,
         @PathVariable dayId: Long,
-    ) = dayService.delete(userId, dayId)
+    ): List<DayResponse> = dayService.delete(userId, dayId)
 }
