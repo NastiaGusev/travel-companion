@@ -11,7 +11,7 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<Map<String, String?>> =
-        ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("error" to ex.message))
+        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to ex.message))
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, String?>> {
@@ -26,4 +26,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException::class)
     fun handleInvalidCredentials(ex: InvalidCredentialsException): ResponseEntity<Map<String, String?>> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("error" to ex.message))
+
+    @ExceptionHandler(EmailAlreadyExistsException::class)
+    fun handleEmailExists(ex: EmailAlreadyExistsException): ResponseEntity<Map<String, String?>> =
+        ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("error" to ex.message))
 }
