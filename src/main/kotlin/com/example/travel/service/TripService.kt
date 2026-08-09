@@ -50,7 +50,7 @@ class TripService(
         // If dates are being set/shrunk, ensure the existing day count still fits
         if (request.startDate != null && request.endDate != null) {
             val newLength = ChronoUnit.DAYS.between(request.startDate, request.endDate).toInt() + 1
-            val existingDayCount = dayRepository.findByTripId(id).size
+            val existingDayCount = dayRepository.findByTripIdOrderByDayNumber(id).size
             if (existingDayCount > newLength) {
                 throw IllegalArgumentException(
                     "Cannot shorten this trip to $newLength day(s): it has $existingDayCount day(s). " +

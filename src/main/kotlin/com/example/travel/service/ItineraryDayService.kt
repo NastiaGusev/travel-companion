@@ -44,14 +44,11 @@ class ItineraryDayService(
         val deletedNumber = day.dayNumber
         dayRepository.delete(day)
 
-        val toShift = dayRepository.findByTripId(trip.id!!)
-            .filter { it.dayNumber > deletedNumber }
+        val toShift = dayRepository.findByTripIdOrderByDayNumber(trip.id!!).filter { it.dayNumber > deletedNumber }
         toShift.forEach { it.dayNumber -= 1 }
         dayRepository.saveAll(toShift)
 
-        return dayRepository.findByTripId(trip.id!!)
-            .sortedBy { it.dayNumber }
-            .map { it.toResponse(trip) }
+        return dayRepository.findByTripIdOrderByDayNumber(trip.id!!).map { it.toResponse(trip) }
     }
 
     @Transactional
@@ -68,7 +65,7 @@ class ItineraryDayService(
     fun listForTrip(userId: UUID, tripId: UUID): List<DayResponse> {
         val trip = tripRepository.findByIdAndUserId(tripId, userId)
             ?: throw NoSuchElementException("Trip not found")
-        return dayRepository.findByTripId(tripId).map { it.toResponse(trip) }
+        return dayRepository.findByTripIdOrderByDayNumber(tripId).map { it.toResponse(trip) }
     }
 
     @Transactional
@@ -99,7 +96,7 @@ class ItineraryDayService(
         dayA.dayNumber = numberB
         dayRepository.saveAndFlush(dayA)
 
-        return dayRepository.findByTripId(tripId)
+        return dayRepository.findByTripIdOrderByDayNumber(tripId)
             .sortedBy { it.dayNumber }
             .map { it.toResponse(trip) }
     }

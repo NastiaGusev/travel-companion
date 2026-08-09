@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 interface ItineraryDayRepository : JpaRepository<ItineraryDay, UUID> {
-    fun findByTripId(tripId: UUID): List<ItineraryDay>
+    fun findByTripIdOrderByDayNumber(tripId: UUID): List<ItineraryDay>
     fun findTopByTripIdOrderByDayNumberDesc(tripId: UUID): ItineraryDay?
 }
