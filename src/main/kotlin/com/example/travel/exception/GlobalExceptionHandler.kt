@@ -22,4 +22,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(NoSuchElementException::class)
     fun handleNotFound(ex: NoSuchElementException): ResponseEntity<Map<String, String?>> =
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to ex.message))
+
+    @ExceptionHandler(InvalidCredentialsException::class)
+    fun handleInvalidCredentials(ex: InvalidCredentialsException): ResponseEntity<Map<String, String?>> =
+        ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("error" to ex.message))
 }

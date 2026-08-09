@@ -3,6 +3,7 @@ package com.example.travel.service
 import com.example.travel.dto.LoginRequest
 import com.example.travel.dto.RegisterRequest
 import com.example.travel.entity.User
+import com.example.travel.exception.InvalidCredentialsException
 import com.example.travel.repository.UserRepository
 import com.example.travel.security.JwtService
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -29,10 +30,10 @@ class AuthService(
 
     fun login(request: LoginRequest): String {
         val user = userRepository.findByEmail(request.email)
-            ?: throw IllegalArgumentException("Invalid email or password")
+            ?: throw InvalidCredentialsException("Invalid email or password")
 
         if (!passwordEncoder.matches(request.password, user.passwordHash)) {
-            throw IllegalArgumentException("Invalid email or password")
+            throw InvalidCredentialsException("Invalid email or password")
         }
         return jwtService.generateToken(user.id!!, user.email)
     }
