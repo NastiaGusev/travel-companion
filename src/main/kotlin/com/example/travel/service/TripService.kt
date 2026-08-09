@@ -5,12 +5,15 @@ import com.example.travel.dto.TripResponse
 import com.example.travel.entity.Trip
 import com.example.travel.repository.TripRepository
 import org.springframework.stereotype.Service
+import java.time.LocalDate
+import java.time.OffsetDateTime
 
 @Service
 class TripService(
     private val tripRepository: TripRepository,
 ) {
     fun create(userId: Long, request: TripRequest): TripResponse {
+        validateDates(request.startDate, request.endDate)
         val trip = Trip(
             userId = userId,
             title = request.title,
@@ -35,6 +38,19 @@ class TripService(
         tripRepository.delete(trip)
     }
 
+    fun update(userId: Long, id: Long, request: TripRequest): TripResponse {
+        val trip = tripRepository.findByIdAndUserId(id, userId)
+            ?: throw NoSuchElementException("Trip not found")
+        validateDates(request.startDate, request.endDate)
+        trip.title = request.title
+        trip.destination = request.destination
+        trip.startDate = request.startDate
+        trip.endDate = request.endDate
+        trip.description = request.description
+        trip.updatedAt = OffsetDateTime.now()
+        return tripRepository.save(trip).toResponse()
+    }
+
     private fun Trip.toResponse() = TripResponse(
         id = id!!,
         title = title,
@@ -43,4 +59,10 @@ class TripService(
         endDate = endDate,
         description = description,
     )
+
+    private fun validateDates(startDate: LocalDate?, endDate: LocalDate?) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw IllegalArgumentException("End date must be on or after start date")
+        }
+    }
 }

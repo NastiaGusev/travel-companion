@@ -3,6 +3,7 @@ package com.example.travel.service
 import com.example.travel.dto.LoginRequest
 import com.example.travel.dto.RegisterRequest
 import com.example.travel.entity.User
+import com.example.travel.exception.EmailAlreadyExistsException
 import com.example.travel.exception.InvalidCredentialsException
 import com.example.travel.repository.UserRepository
 import com.example.travel.security.JwtService
@@ -17,7 +18,7 @@ class AuthService(
 ) {
     fun register(request: RegisterRequest): String {
         if (userRepository.findByEmail(request.email) != null) {
-            throw IllegalArgumentException("Email already registered")
+            throw EmailAlreadyExistsException("Email already registered")
         }
         val user = User(
             email = request.email,

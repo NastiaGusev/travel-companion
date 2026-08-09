@@ -36,4 +36,11 @@ class TripController(
         @AuthenticationPrincipal userId: Long,
         @PathVariable id: Long,
     ) = tripService.deleteForUser(id, userId)
+
+    @PutMapping("/{id}")
+    fun update(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable id: Long,
+        @Valid @RequestBody request: TripRequest,
+    ): TripResponse = tripService.update(userId, id, request)
 }
