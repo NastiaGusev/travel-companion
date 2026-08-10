@@ -6,6 +6,7 @@ plugins {
 	kotlin("plugin.jpa") version "2.3.21"
 }
 
+val mockitoAgent = configurations.create("mockitoAgent")
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
@@ -35,12 +36,16 @@ dependencies {
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
-	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	mockitoAgent("org.mockito:mockito-core") {
+		isTransitive = false
+	}
+
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.boot:spring-boot-testcontainers")
+	testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.5")
+	testImplementation("org.testcontainers:testcontainers-postgresql:2.0.5")
+	testImplementation("org.springframework.boot:spring-boot-restclient")
+	testImplementation("org.springframework.boot:spring-boot-resttestclient")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -58,4 +63,9 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.test {
+	jvmArgs("-javaagent:${mockitoAgent.asPath}")
+	jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
