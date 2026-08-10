@@ -1,4 +1,4 @@
-package com.example.travel.security
+package com.example.travel.config
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest

@@ -1,9 +1,9 @@
 package com.example.travel.service
 
-import com.example.travel.dto.DayRequest
-import com.example.travel.dto.DayResponse
-import com.example.travel.entity.ItineraryDay
-import com.example.travel.entity.Trip
+import com.example.travel.model.dto.DayRequest
+import com.example.travel.model.dto.DayResponse
+import com.example.travel.model.entity.ItineraryDay
+import com.example.travel.model.entity.Trip
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.TripRepository
 import org.springframework.stereotype.Service

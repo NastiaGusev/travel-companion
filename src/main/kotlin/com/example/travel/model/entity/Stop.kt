@@ -1,18 +1,28 @@
-package com.example.travel.entity
+package com.example.travel.model.entity
 
 import jakarta.persistence.*
 import org.hibernate.annotations.UuidGenerator
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.UUID
 
 @Entity
-@Table(name = "itinerary_days")
-class ItineraryDay(
-    @Column(name = "trip_id", nullable = false)
-    var tripId: UUID,
+@Table(name = "stops")
+class Stop(
+    @Column(name = "itinerary_day_id", nullable = false)
+    var dayId: UUID,
 
-    @Column(name = "day_number", nullable = false)
-    var dayNumber: Int,
+    @Column(nullable = false)
+    var name: String,
+
+    @Column(nullable = false)
+    var position: Int,
+
+    @Column(name = "start_time")
+    var startTime: LocalTime? = null,
+
+    @Column(name = "end_time")
+    var endTime: LocalTime? = null,
 
     @Column(columnDefinition = "TEXT")
     var notes: String? = null,

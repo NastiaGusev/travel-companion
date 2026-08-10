@@ -1,4 +1,4 @@
-package com.example.travel.dto
+package com.example.travel.model.dto
 
 import jakarta.validation.constraints.NotBlank
 import java.time.LocalDate

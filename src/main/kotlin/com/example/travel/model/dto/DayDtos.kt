@@ -1,4 +1,4 @@
-package com.example.travel.dto
+package com.example.travel.model.dto
 
 import java.time.LocalDate
 import java.util.UUID

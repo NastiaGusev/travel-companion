@@ -1,8 +1,8 @@
 package com.example.travel.service
 
-import com.example.travel.dto.StopRequest
-import com.example.travel.dto.StopResponse
-import com.example.travel.entity.Stop
+import com.example.travel.model.dto.StopRequest
+import com.example.travel.model.dto.StopResponse
+import com.example.travel.model.entity.Stop
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.StopRepository
 import com.example.travel.repository.TripRepository

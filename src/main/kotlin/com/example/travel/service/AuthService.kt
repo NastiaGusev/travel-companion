@@ -1,12 +1,12 @@
 package com.example.travel.service
 
-import com.example.travel.dto.LoginRequest
-import com.example.travel.dto.RegisterRequest
-import com.example.travel.entity.User
+import com.example.travel.model.dto.LoginRequest
+import com.example.travel.model.dto.RegisterRequest
+import com.example.travel.model.entity.User
 import com.example.travel.exception.EmailAlreadyExistsException
 import com.example.travel.exception.InvalidCredentialsException
 import com.example.travel.repository.UserRepository
-import com.example.travel.security.JwtService
+import com.example.travel.config.JwtService
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 

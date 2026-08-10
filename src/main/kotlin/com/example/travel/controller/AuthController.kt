@@ -1,8 +1,8 @@
 package com.example.travel.controller
 
-import com.example.travel.dto.AuthResponse
-import com.example.travel.dto.LoginRequest
-import com.example.travel.dto.RegisterRequest
+import com.example.travel.model.dto.AuthResponse
+import com.example.travel.model.dto.LoginRequest
+import com.example.travel.model.dto.RegisterRequest
 import com.example.travel.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus

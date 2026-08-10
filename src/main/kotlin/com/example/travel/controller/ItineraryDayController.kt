@@ -1,8 +1,8 @@
 package com.example.travel.controller
 
-import com.example.travel.dto.DayRequest
-import com.example.travel.dto.DayResponse
-import com.example.travel.dto.SwapDaysRequest
+import com.example.travel.model.dto.DayRequest
+import com.example.travel.model.dto.DayResponse
+import com.example.travel.model.dto.SwapDaysRequest
 import com.example.travel.service.ItineraryDayService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus

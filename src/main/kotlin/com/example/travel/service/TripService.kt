@@ -1,8 +1,8 @@
 package com.example.travel.service
 
-import com.example.travel.dto.TripRequest
-import com.example.travel.dto.TripResponse
-import com.example.travel.entity.Trip
+import com.example.travel.model.dto.TripRequest
+import com.example.travel.model.dto.TripResponse
+import com.example.travel.model.entity.Trip
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.TripRepository
 import org.springframework.stereotype.Service

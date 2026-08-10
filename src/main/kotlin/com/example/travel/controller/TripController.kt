@@ -1,7 +1,7 @@
 package com.example.travel.controller
 
-import com.example.travel.dto.TripRequest
-import com.example.travel.dto.TripResponse
+import com.example.travel.model.dto.TripRequest
+import com.example.travel.model.dto.TripResponse
 import com.example.travel.service.TripService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus

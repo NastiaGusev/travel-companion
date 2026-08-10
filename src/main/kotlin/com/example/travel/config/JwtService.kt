@@ -1,4 +1,4 @@
-package com.example.travel.security
+package com.example.travel.config
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys

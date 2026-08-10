@@ -1,8 +1,7 @@
 package com.example.travel.trip
 
-import com.example.travel.dto.TripRequest
-import com.example.travel.entity.ItineraryDay
-import com.example.travel.entity.Trip
+import com.example.travel.model.dto.TripRequest
+import com.example.travel.model.entity.Trip
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.TripRepository
 import com.example.travel.service.TripService

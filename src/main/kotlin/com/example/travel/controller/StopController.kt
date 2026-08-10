@@ -1,7 +1,7 @@
 package com.example.travel.controller
 
-import com.example.travel.dto.StopRequest
-import com.example.travel.dto.StopResponse
+import com.example.travel.model.dto.StopRequest
+import com.example.travel.model.dto.StopResponse
 import com.example.travel.service.StopService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus

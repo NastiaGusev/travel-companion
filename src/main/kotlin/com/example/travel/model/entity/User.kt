@@ -1,4 +1,4 @@
-package com.example.travel.entity
+package com.example.travel.model.entity
 
 import jakarta.persistence.*
 import org.hibernate.annotations.UuidGenerator

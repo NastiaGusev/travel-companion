@@ -1,6 +1,6 @@
 package com.example.travel.repository
 
-import com.example.travel.entity.Stop
+import com.example.travel.model.entity.Stop
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
