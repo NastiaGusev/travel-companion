@@ -1,4 +1,4 @@
-package com.example.travel
+package com.example.travel.support
 
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate
 import org.springframework.boot.test.context.SpringBootTest
