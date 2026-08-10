@@ -1,4 +1,4 @@
-package com.example.travel
+package com.example.travel.trip
 
 import com.example.travel.support.IntegrationTestBase
 import com.example.travel.support.bearerHeaders

@@ -46,6 +46,7 @@ dependencies {
 	testImplementation("org.testcontainers:testcontainers-postgresql:2.0.5")
 	testImplementation("org.springframework.boot:spring-boot-restclient")
 	testImplementation("org.springframework.boot:spring-boot-resttestclient")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

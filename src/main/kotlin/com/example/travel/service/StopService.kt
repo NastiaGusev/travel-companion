@@ -96,12 +96,18 @@ class StopService(
         }
     }
 
+    /**
+     * Pure ordering rule for stops within a day: earliest start time first,
+     * stops with no start time last, ties broken by creation order.
+     */
+    fun orderStops(stops: List<Stop>): List<Stop> =
+        stops.sortedWith(
+            compareBy<Stop, LocalTime?>(nullsLast()) { it.startTime }
+                .thenBy { it.createdAt }
+        )
+
     private fun resequence(dayId: UUID) {
-        val ordered = stopRepository.findByDayIdOrderByPosition(dayId)
-            .sortedWith(
-                compareBy<Stop, LocalTime?>(nullsLast()) { it.startTime }
-                    .thenBy { it.createdAt }
-            )
+        val ordered = orderStops(stopRepository.findByDayIdOrderByPosition(dayId))
         // Phase 1: park at temporary negative positions to avoid unique collisions
         ordered.forEachIndexed { i, stop -> stop.position = -(i + 1) }
         stopRepository.saveAllAndFlush(ordered)

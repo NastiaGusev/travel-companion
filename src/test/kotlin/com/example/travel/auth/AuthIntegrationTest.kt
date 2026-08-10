@@ -1,4 +1,4 @@
-package com.example.travel
+package com.example.travel.auth
 
 import com.example.travel.support.IntegrationTestBase
 import org.assertj.core.api.Assertions.assertThat
