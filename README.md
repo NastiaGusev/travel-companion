@@ -1,8 +1,6 @@
-# AI Travel Companion
+# AI Travel Companion — Backend Service
 
 A backend service for planning and organizing trips — built as a production-quality showcase of backend engineering in Kotlin and Spring Boot.
-
-> 🚧 **In active development.** The core API and foundation are complete; cloud deployment and later features are on the roadmap below.
 
 ## Overview
 
@@ -18,14 +16,27 @@ A REST API for managing trips, day-by-day itineraries, and stops, with JWT authe
 - **Docs:** OpenAPI / Swagger UI (springdoc)
 - **Testing:** JUnit, Testcontainers (integration), unit tests
 - **Tooling:** Docker, Docker Compose
+- **Infrastructure:** AWS (ECS Fargate, ECR, RDS, SSM Parameter Store, IAM)
 
 ## Architecture
 
 Layered architecture (controller → service → repository) with a clear separation of concerns. Resources are scoped to their owner, so a user can only ever reach their own data — cross-user access is indistinguishable from not-found. The domain models trips, itinerary days (auto-numbered, with dates derived from the trip's start date), and stops (auto-ordered by time within a day).
 
-## Getting started
+## Deployment
 
-The whole stack — the app and its database — runs in containers.
+Deployed to AWS, containerized and running without managed servers:
+
+- ECS Fargate — runs the container
+- Amazon ECR — image registry
+- Amazon RDS (PostgreSQL) — managed database, private (not publicly accessible)
+- SSM Parameter Store — encrypted secrets (DB password, JWT key), injected at runtime
+- IAM — least-privilege execution role, scoped to the required secrets only
+
+Configuration is entirely environment-driven, so the same image runs locally (Docker Compose) and in the cloud unchanged.
+
+## Running locally
+
+Run the entire stack — app and database — locally with Docker Compose:
 
 ```bash
 # 1. Clone
@@ -54,14 +65,3 @@ The project is covered by integration tests (spinning up a real PostgreSQL via T
 ```bash
 ./gradlew test
 ```
-
-## Roadmap
-
-- ✅ Core API — auth, trips, itineraries, stops
-- ✅ PostgreSQL persistence with Flyway migrations
-- ✅ Containerized (Docker + Docker Compose)
-- ✅ OpenAPI / Swagger documentation
-- 🔲 Deployment to AWS with CI/CD
-- 🔲 Maps / places integration with caching
-- 🔲 Trip collaboration and sharing
-- 🔲 AI-assisted planning and semantic search (separate Python service)
