@@ -4,7 +4,7 @@ A backend service for planning and organizing trips — built as a production-qu
 
 ## Overview
 
-A REST API for managing trips, day-by-day itineraries, and stops, with JWT authentication and PostgreSQL persistence. Every resource is ownership-scoped, the schema is migration-managed, and the whole stack runs locally with a single command.
+A REST API for managing trips, day-by-day itineraries, and stops, with JWT authentication and PostgreSQL persistence. Every resource is ownership-scoped, the schema is migration-managed, and the whole stack runs locally with a single command and is deployed to AWS with automated CI/CD.
 
 ## Tech stack
 
@@ -17,6 +17,7 @@ A REST API for managing trips, day-by-day itineraries, and stops, with JWT authe
 - **Testing:** JUnit, Testcontainers (integration), unit tests
 - **Tooling:** Docker, Docker Compose
 - **Infrastructure:** AWS (ECS Fargate, ECR, RDS, SSM Parameter Store, IAM)
+- **CI/CD:** GitHub Actions (test, build, push to ECR, deploy to Fargate)
 
 ## Architecture
 
