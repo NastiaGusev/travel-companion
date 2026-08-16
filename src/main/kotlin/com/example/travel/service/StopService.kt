@@ -5,7 +5,6 @@ import com.example.travel.model.dto.StopResponse
 import com.example.travel.model.entity.Stop
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.StopRepository
-import com.example.travel.repository.TripRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalTime
@@ -16,8 +15,8 @@ import java.util.UUID
 class StopService(
     private val stopRepository: StopRepository,
     private val dayRepository: ItineraryDayRepository,
-    private val tripRepository: TripRepository,
-) {
+    private val tripAccessService: TripAccessService,
+    ) {
     @Transactional
     fun create(userId: UUID, dayId: UUID, request: StopRequest): StopResponse {
         verifyDayOwnership(dayId, userId)
@@ -74,8 +73,7 @@ class StopService(
     private fun verifyDayOwnership(dayId: UUID, userId: UUID) {
         val day = dayRepository.findById(dayId)
             .orElseThrow { NoSuchElementException("Day not found") }
-        tripRepository.findByIdAndUserId(day.tripId, userId)
-            ?: throw NoSuchElementException("Day not found")
+        tripAccessService.requireEditAccess(day.tripId, userId)
     }
 
     private fun loadOwnedStop(stopId: UUID, userId: UUID): Stop {

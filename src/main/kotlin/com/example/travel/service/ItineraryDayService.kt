@@ -5,7 +5,6 @@ import com.example.travel.model.dto.DayResponse
 import com.example.travel.model.entity.ItineraryDay
 import com.example.travel.model.entity.Trip
 import com.example.travel.repository.ItineraryDayRepository
-import com.example.travel.repository.TripRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
@@ -15,12 +14,10 @@ import java.util.UUID
 @Service
 class ItineraryDayService(
     private val dayRepository: ItineraryDayRepository,
-    private val tripRepository: TripRepository,
-) {
+    private val tripAccessService: TripAccessService,
+    ) {
     fun create(userId: UUID, tripId: UUID, request: DayRequest): DayResponse {
-        val trip = tripRepository.findByIdAndUserId(tripId, userId)
-            ?: throw NoSuchElementException("Trip not found")
-
+        val trip = tripAccessService.requireEditAccess(tripId, userId)
         val nextDayNumber = (dayRepository
             .findTopByTripIdOrderByDayNumberDesc(tripId)?.dayNumber ?: 0) + 1
 
@@ -38,8 +35,7 @@ class ItineraryDayService(
     fun delete(userId: UUID, dayId: UUID): List<DayResponse> {
         val day = dayRepository.findById(dayId)
             .orElseThrow { NoSuchElementException("Day not found") }
-        val trip = tripRepository.findByIdAndUserId(day.tripId, userId)
-            ?: throw NoSuchElementException("Trip not found")
+        val trip = tripAccessService.requireEditAccess(day.tripId, userId)
 
         val deletedNumber = day.dayNumber
         dayRepository.delete(day)
@@ -55,23 +51,21 @@ class ItineraryDayService(
     fun updateNotes(userId: UUID, dayId: UUID, notes: String?): DayResponse {
         val day = dayRepository.findById(dayId)
             .orElseThrow { NoSuchElementException("Day not found") }
-        val trip = tripRepository.findByIdAndUserId(day.tripId, userId)
-            ?: throw NoSuchElementException("Trip not found")
+        val trip = tripAccessService.requireEditAccess(day.tripId, userId)
+
         day.notes = notes
         day.updatedAt = OffsetDateTime.now()
         return dayRepository.save(day).toResponse(trip)
     }
 
     fun listForTrip(userId: UUID, tripId: UUID): List<DayResponse> {
-        val trip = tripRepository.findByIdAndUserId(tripId, userId)
-            ?: throw NoSuchElementException("Trip not found")
+        val trip = tripAccessService.requireEditAccess(tripId, userId)
         return dayRepository.findByTripIdOrderByDayNumber(tripId).map { it.toResponse(trip) }
     }
 
     @Transactional
     fun swapDays(userId: UUID, tripId: UUID, dayIdA: UUID, dayIdB: UUID): List<DayResponse> {
-        val trip = tripRepository.findByIdAndUserId(tripId, userId)
-            ?: throw NoSuchElementException("Trip not found")
+        val trip = tripAccessService.requireEditAccess(tripId, userId)
 
         val dayA = dayRepository.findById(dayIdA)
             .orElseThrow { NoSuchElementException("Day $dayIdA not found") }

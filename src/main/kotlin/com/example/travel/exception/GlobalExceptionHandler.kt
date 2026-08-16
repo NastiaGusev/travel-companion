@@ -30,4 +30,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(EmailAlreadyExistsException::class)
     fun handleEmailExists(ex: EmailAlreadyExistsException): ResponseEntity<Map<String, String?>> =
         ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("error" to ex.message))
+
+    @ExceptionHandler(AccessDeniedException::class)
+    fun handleAccessDenied(ex: AccessDeniedException): ResponseEntity<Map<String, String?>> =
+        ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to ex.message))
 }

@@ -3,8 +3,8 @@ package com.example.travel.stop
 import com.example.travel.model.entity.Stop
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.StopRepository
-import com.example.travel.repository.TripRepository
 import com.example.travel.service.StopService
+import com.example.travel.service.TripAccessService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -17,7 +17,7 @@ class StopServiceTest {
     private val service = StopService(
         mock(StopRepository::class.java),
         mock(ItineraryDayRepository::class.java),
-        mock(TripRepository::class.java),
+        mock(TripAccessService::class.java),
     )
 
     private fun stop(

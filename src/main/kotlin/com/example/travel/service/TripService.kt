@@ -15,7 +15,8 @@ import java.util.UUID
 class TripService(
     private val tripRepository: TripRepository,
     private val dayRepository: ItineraryDayRepository,
-) {
+    private val tripAccessService: TripAccessService,
+    ) {
     fun create(userId: UUID, request: TripRequest): TripResponse {
         validateDates(request.startDate, request.endDate)
         val trip = Trip(
@@ -30,21 +31,18 @@ class TripService(
     }
 
     fun listForUser(userId: UUID): List<TripResponse> =
-        tripRepository.findByUserId(userId).map { it.toResponse() }
+        tripAccessService.listAccessibleTrips(userId).map { it.toResponse() }
 
     fun getForUser(id: UUID, userId: UUID): TripResponse =
-        tripRepository.findByIdAndUserId(id, userId)?.toResponse()
-            ?: throw NoSuchElementException("Trip not found")
+        tripAccessService.requireEditAccess(id, userId).toResponse()
 
     fun deleteForUser(id: UUID, userId: UUID) {
-        val trip = tripRepository.findByIdAndUserId(id, userId)
-            ?: throw NoSuchElementException("Trip not found")
+        val trip = tripAccessService.requireOwner(id, userId)
         tripRepository.delete(trip)
     }
 
     fun update(userId: UUID, id: UUID, request: TripRequest): TripResponse {
-        val trip = tripRepository.findByIdAndUserId(id, userId)
-            ?: throw NoSuchElementException("Trip not found")
+        val trip = tripAccessService.requireEditAccess(id, userId)
         validateDates(request.startDate, request.endDate)
 
         // If dates are being set/shrunk, ensure the existing day count still fits
