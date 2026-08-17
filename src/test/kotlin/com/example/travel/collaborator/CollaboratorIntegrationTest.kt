@@ -197,7 +197,7 @@ class CollaboratorIntegrationTest : IntegrationTestBase() {
             "/api/trips/${s.tripId}",
             HttpMethod.PUT,
             HttpEntity(
-                mapOf("title" to "Edited by editor", "startDate" to "2026-05-01", "endDate" to "2026-05-10"),
+                mapOf("title" to "Edited by editor", "startDate" to "2026-05-01", "endDate" to "2026-05-10", "version" to 0),
                 bearerHeaders(s.editorToken),
             ),
             Map::class.java,
@@ -236,5 +236,43 @@ class CollaboratorIntegrationTest : IntegrationTestBase() {
         val s = sharedTrip()
         val outsiderToken = rest.registerAndGetToken()
         assertThat(listDays(outsiderToken, s.tripId).statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+    }
+
+    @Test
+    fun `concurrent edits by owner and editor produce a conflict`() {
+        val s = sharedTrip()   // owner + editor share one trip, both at version 0
+
+        // Owner edits first → trip goes to version 1
+        val ownerEdit = rest.exchange(
+            "/api/trips/${s.tripId}",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf(
+                    "title" to "Owner's title",
+                    "startDate" to "2026-05-01",
+                    "endDate" to "2026-05-10",
+                    "version" to 0,
+                ),
+                bearerHeaders(s.ownerToken),
+            ),
+            Map::class.java,
+        )
+        assertThat(ownerEdit.statusCode).isEqualTo(HttpStatus.OK)
+
+        // Editor still holds the stale version 0 → conflict
+        val editorEdit = rest.exchange<String>(
+            "/api/trips/${s.tripId}",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf(
+                    "title" to "Editor's title",
+                    "startDate" to "2026-05-01",
+                    "endDate" to "2026-05-10",
+                    "version" to 0,
+                ),
+                bearerHeaders(s.editorToken),
+            ),
+        )
+        assertThat(editorEdit.statusCode).isEqualTo(HttpStatus.CONFLICT)
     }
 }

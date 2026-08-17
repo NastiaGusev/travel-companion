@@ -11,6 +11,7 @@ data class TripRequest(
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null,
     val description: String? = null,
+    val version: Long? = null,
 )
 
 data class TripResponse(
@@ -20,4 +21,5 @@ data class TripResponse(
     val startDate: LocalDate?,
     val endDate: LocalDate?,
     val description: String?,
+    val version: Long,
 )

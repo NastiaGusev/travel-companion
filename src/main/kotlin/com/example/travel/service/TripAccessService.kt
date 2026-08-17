@@ -4,6 +4,7 @@ import com.example.travel.exception.AccessDeniedException
 import com.example.travel.model.entity.Trip
 import com.example.travel.repository.TripCollaboratorRepository
 import com.example.travel.repository.TripRepository
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -48,5 +49,16 @@ class TripAccessService(
         val shared = if (sharedTripIds.isEmpty()) emptyList()
         else tripRepository.findAllById(sharedTripIds)
         return (owned + shared).distinctBy { it.id }
+    }
+
+    fun requireMatchingVersion(current: Long, expected: Long?) {
+        if (expected == null) {
+            throw IllegalArgumentException("version is required for updates")
+        }
+        if (current != expected) {
+            throw ObjectOptimisticLockingFailureException(
+                "Item was modified by someone else", null,
+            )
+        }
     }
 }

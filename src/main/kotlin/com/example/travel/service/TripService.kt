@@ -45,6 +45,8 @@ class TripService(
         val trip = tripAccessService.requireEditAccess(id, userId)
         validateDates(request.startDate, request.endDate)
 
+        tripAccessService.requireMatchingVersion(trip.version, request.version)
+
         // If dates are being set/shrunk, ensure the existing day count still fits
         if (request.startDate != null && request.endDate != null) {
             val newLength = ChronoUnit.DAYS.between(request.startDate, request.endDate).toInt() + 1
@@ -63,7 +65,7 @@ class TripService(
         trip.endDate = request.endDate
         trip.description = request.description
         trip.updatedAt = OffsetDateTime.now()
-        return tripRepository.save(trip).toResponse()
+        return tripRepository.saveAndFlush(trip).toResponse()
     }
 
     private fun Trip.toResponse() = TripResponse(
@@ -73,6 +75,7 @@ class TripService(
         startDate = startDate,
         endDate = endDate,
         description = description,
+        version = version,
     )
 
     private fun validateDates(startDate: LocalDate?, endDate: LocalDate?) {

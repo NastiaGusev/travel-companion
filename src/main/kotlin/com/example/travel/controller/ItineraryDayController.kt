@@ -59,7 +59,7 @@ class ItineraryDayController(
         @AuthenticationPrincipal userId: UUID,
         @PathVariable dayId: UUID,
         @Valid @RequestBody request: DayRequest,
-    ): DayResponse = dayService.updateNotes(userId, dayId, request.notes)
+    ): DayResponse = dayService.updateNotes(userId, dayId, request)
 
     @Operation(
         summary = "Swap two days",

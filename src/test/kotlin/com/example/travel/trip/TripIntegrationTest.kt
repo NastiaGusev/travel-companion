@@ -2,6 +2,7 @@ package com.example.travel.trip
 
 import com.example.travel.support.IntegrationTestBase
 import com.example.travel.support.bearerHeaders
+import com.example.travel.support.createTrip
 import com.example.travel.support.registerAndGetToken
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -125,6 +126,7 @@ class TripIntegrationTest: IntegrationTestBase() {
                 "startDate" to "2026-05-01",
                 "endDate" to "2026-05-12",
                 "description" to "Extended",
+                "version" to 0,
             ),
             bearerHeaders(token),
         )
@@ -258,5 +260,82 @@ class TripIntegrationTest: IntegrationTestBase() {
         )
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+    }
+
+    @Test
+    fun `updating with a stale version returns 409`() {
+        val token = rest.registerAndGetToken()
+        val tripId = rest.createTrip(token)["id"]!!
+
+        // first update: version 0 → succeeds, trip becomes version 1
+        val first = rest.exchange(
+            "/api/trips/$tripId",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf("title" to "First", "startDate" to "2026-05-01", "endDate" to "2026-05-10", "version" to 0),
+                bearerHeaders(token),
+            ),
+            Map::class.java,
+        )
+        assertThat(first.statusCode).isEqualTo(HttpStatus.OK)
+
+        // second update reusing stale version 0 → conflict
+        val stale = rest.exchange<String>(
+            "/api/trips/$tripId",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf("title" to "Stale", "startDate" to "2026-05-01", "endDate" to "2026-05-10", "version" to 0),
+                bearerHeaders(token),
+            ),
+        )
+        assertThat(stale.statusCode).isEqualTo(HttpStatus.CONFLICT)
+    }
+
+    @Test
+    fun `a fresh version allows a subsequent update`() {
+        val token = rest.registerAndGetToken()
+        val tripId = rest.createTrip(token).get("id")!!
+
+        // update with version 0 → response should carry version 1
+        val first = rest.exchange(
+            "/api/trips/$tripId",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf("title" to "First", "startDate" to "2026-05-01", "endDate" to "2026-05-10", "version" to 0),
+                bearerHeaders(token),
+            ),
+            Map::class.java,
+        )
+        assertThat(first.statusCode).isEqualTo(HttpStatus.OK)
+        val newVersion = (first.body?.get("version") as Number).toInt()
+        assertThat(newVersion).isEqualTo(1)
+
+        // update again with the CURRENT version → succeeds
+        val second = rest.exchange(
+            "/api/trips/$tripId",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf("title" to "Second", "startDate" to "2026-05-01", "endDate" to "2026-05-10", "version" to newVersion),
+                bearerHeaders(token),
+            ),
+            Map::class.java,
+        )
+        assertThat(second.statusCode).isEqualTo(HttpStatus.OK)
+    }
+
+    @Test
+    fun `updating without a version returns 400`() {
+        val token = rest.registerAndGetToken()
+        val tripId = rest.createTrip(token).get("id")!!
+
+        val response = rest.exchange<String>(
+            "/api/trips/$tripId",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf("title" to "No version", "startDate" to "2026-05-01", "endDate" to "2026-05-10"),
+                bearerHeaders(token),
+            ),
+        )
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
 }

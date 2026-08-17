@@ -75,8 +75,7 @@ class TripServiceTest {
         whenever(tripAccessService.requireEditAccess(tripId, userId)).thenReturn(existing)
         whenever(dayRepository.findByTripIdOrderByDayNumber(tripId))
             .thenReturn(listOf(itineraryDay(tripId, 1), itineraryDay(tripId, 2)))
-        whenever(tripRepository.save(any<Trip>())).thenAnswer { it.arguments[0] as Trip }
-
+        whenever(tripRepository.saveAndFlush(any<Trip>())).thenAnswer { it.arguments[0] as Trip }
         // shrink 5-day trip to 3 days — still fits the 2 existing days
         val request = TripRequest(
             title = "Japan",

@@ -76,7 +76,7 @@ class ItineraryDayIntegrationTest : IntegrationTestBase() {
         val tripId = rest.createTrip(token)["id"]!!
         val dayId = rest.createDay(token, tripId, "old")["id"]!!
 
-        val entity = HttpEntity(mapOf("notes" to "updated"), bearerHeaders(token))
+        val entity = HttpEntity(mapOf("notes" to "updated", "version" to 0), bearerHeaders(token))
         val response = rest.exchange("/api/days/$dayId", HttpMethod.PUT, entity, Map::class.java)
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
@@ -270,5 +270,62 @@ class ItineraryDayIntegrationTest : IntegrationTestBase() {
         val response = rest.exchange("/api/trips/$tripId/days/swap", HttpMethod.POST, entity, Map::class.java)
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+    }
+
+    @Test
+    fun `updating a day with a stale version returns 409`() {
+        val token = rest.registerAndGetToken()
+        val tripId = rest.createTrip(token)["id"]!!
+        val dayId = rest.createDay(token, tripId)["id"]!!
+
+        // first update: version 0 → succeeds, day becomes version 1
+        val first = rest.exchange(
+            "/api/days/$dayId",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf("notes" to "First edit", "version" to 0),
+                bearerHeaders(token),
+            ),
+            Map::class.java,
+        )
+        assertThat(first.statusCode).isEqualTo(HttpStatus.OK)
+
+        // second update reusing the stale version 0 → conflict
+        val stale = rest.exchange<String>(
+            "/api/days/$dayId",
+            HttpMethod.PUT,
+            HttpEntity(
+                mapOf("notes" to "Stale edit", "version" to 0),
+                bearerHeaders(token),
+            ),
+        )
+        assertThat(stale.statusCode).isEqualTo(HttpStatus.CONFLICT)
+    }
+
+    @Test
+    fun `updating a day with the current version succeeds`() {
+        val token = rest.registerAndGetToken()
+        val tripId = rest.createTrip(token)["id"]!!
+        val created = rest.createDay(token, tripId)
+        val dayId = created["id"]!!
+        val startVersion = (created["version"] as Number).toInt()
+
+        val first = rest.exchange(
+            "/api/days/$dayId",
+            HttpMethod.PUT,
+            HttpEntity(mapOf("notes" to "First", "version" to startVersion), bearerHeaders(token)),
+            Map::class.java,
+        )
+        assertThat(first.statusCode).isEqualTo(HttpStatus.OK)
+        val newVersion = (first.body?.get("version") as Number).toInt()
+        assertThat(newVersion).isEqualTo(startVersion + 1)
+
+        val second = rest.exchange(
+            "/api/days/$dayId",
+            HttpMethod.PUT,
+            HttpEntity(mapOf("notes" to "Second", "version" to newVersion), bearerHeaders(token)),
+            Map::class.java,
+        )
+        assertThat(second.statusCode).isEqualTo(HttpStatus.OK)
     }
 }

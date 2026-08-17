@@ -48,14 +48,15 @@ class ItineraryDayService(
     }
 
     @Transactional
-    fun updateNotes(userId: UUID, dayId: UUID, notes: String?): DayResponse {
+    fun updateNotes(userId: UUID, dayId: UUID, request: DayRequest): DayResponse {
         val day = dayRepository.findById(dayId)
             .orElseThrow { NoSuchElementException("Day not found") }
         val trip = tripAccessService.requireEditAccess(day.tripId, userId)
+        tripAccessService.requireMatchingVersion(day.version, request.version)
 
-        day.notes = notes
+        day.notes = request.notes
         day.updatedAt = OffsetDateTime.now()
-        return dayRepository.save(day).toResponse(trip)
+        return dayRepository.saveAndFlush(day).toResponse(trip)
     }
 
     fun listForTrip(userId: UUID, tripId: UUID): List<DayResponse> {
@@ -101,6 +102,7 @@ class ItineraryDayService(
         dayNumber = dayNumber,
         dayDate = trip.startDate?.plusDays((dayNumber - 1).toLong()),
         notes = notes,
+        version = version,
     )
 
     private fun validateDayFitsTrip(trip: Trip, dayNumber: Int) {
