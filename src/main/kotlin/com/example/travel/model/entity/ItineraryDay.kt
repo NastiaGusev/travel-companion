@@ -28,4 +28,8 @@ class ItineraryDay(
 
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now()
+
+    @Version
+    @Column(nullable = false)
+    var version: Long = 0
 }

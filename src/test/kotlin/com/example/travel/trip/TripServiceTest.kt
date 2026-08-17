@@ -5,6 +5,7 @@ import com.example.travel.model.entity.ItineraryDay
 import com.example.travel.model.entity.Trip
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.TripRepository
+import com.example.travel.service.TripAccessService
 import com.example.travel.service.TripService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -26,7 +27,10 @@ class TripServiceTest {
     @Mock
     lateinit var dayRepository: ItineraryDayRepository
 
-    private val service by lazy { TripService(tripRepository, dayRepository) }
+    @Mock
+    lateinit var tripAccessService: TripAccessService
+
+    private val service by lazy { TripService(tripRepository, dayRepository, tripAccessService) }
 
     @Test
     fun `update rejects shrinking a trip below its existing day count`() {
@@ -41,8 +45,7 @@ class TripServiceTest {
             endDate = LocalDate.of(2026, 5, 3),
         ).apply { id = tripId }
 
-        whenever(tripRepository.findByIdAndUserId(tripId, userId)).thenReturn(existing)
-        // three days already exist on this trip
+        whenever(tripAccessService.requireEditAccess(tripId, userId)).thenReturn(existing)
         whenever(dayRepository.findByTripIdOrderByDayNumber(tripId))
             .thenReturn(listOf(itineraryDay(tripId, 1), itineraryDay(tripId, 2), itineraryDay(tripId, 3)))
 
@@ -69,11 +72,10 @@ class TripServiceTest {
             endDate = LocalDate.of(2026, 5, 5),
         ).apply { id = tripId }
 
-        whenever(tripRepository.findByIdAndUserId(tripId, userId)).thenReturn(existing)
+        whenever(tripAccessService.requireEditAccess(tripId, userId)).thenReturn(existing)
         whenever(dayRepository.findByTripIdOrderByDayNumber(tripId))
             .thenReturn(listOf(itineraryDay(tripId, 1), itineraryDay(tripId, 2)))
-        whenever(tripRepository.save(any<Trip>())).thenAnswer { it.arguments[0] as Trip }
-
+        whenever(tripRepository.saveAndFlush(any<Trip>())).thenAnswer { it.arguments[0] as Trip }
         // shrink 5-day trip to 3 days — still fits the 2 existing days
         val request = TripRequest(
             title = "Japan",
