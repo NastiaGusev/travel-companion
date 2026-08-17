@@ -13,7 +13,11 @@ import org.springframework.boot.resttestclient.exchange
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import java.util.UUID
+import java.util.concurrent.Callable
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.Executors
 
 class CollaboratorIntegrationTest : IntegrationTestBase() {
 
@@ -274,5 +278,54 @@ class CollaboratorIntegrationTest : IntegrationTestBase() {
             ),
         )
         assertThat(editorEdit.statusCode).isEqualTo(HttpStatus.CONFLICT)
+    }
+
+    @Test
+    fun `two simultaneous edits at the same version - exactly one wins`() {
+        val s = sharedTrip()   // owner + editor share one trip, both at version 0
+
+        val pool = Executors.newFixedThreadPool(2)
+        val barrier = CyclicBarrier(2)   // both threads wait here, then fire together
+
+        fun editWith(token: String, title: String): Callable<HttpStatusCode> = Callable {
+            val entity = HttpEntity(
+                mapOf(
+                    "title" to title,
+                    "startDate" to "2026-05-01",
+                    "endDate" to "2026-05-10",
+                    "version" to 0,
+                ),
+                bearerHeaders(token),
+            )
+            barrier.await()   // block until both threads are ready, then race
+            rest.exchange<String>(
+                "/api/trips/${s.tripId}",
+                HttpMethod.PUT,
+                entity,
+            ).statusCode
+        }
+
+        try {
+            val futures = pool.invokeAll(
+                listOf(
+                    editWith(s.ownerToken, "Owner's title"),
+                    editWith(s.editorToken, "Editor's title"),
+                )
+            )
+            val statuses = futures.map { it.get() }
+
+            // Exactly one succeeds, exactly one is rejected as a conflict
+            assertThat(statuses).containsExactlyInAnyOrder(HttpStatus.OK, HttpStatus.CONFLICT)
+        } finally {
+            pool.shutdown()
+        }
+
+        // The trip advanced by exactly one version — the loser's write never landed
+        val fresh = rest.exchange<Map<*, *>>(
+            "/api/trips/${s.tripId}",
+            HttpMethod.GET,
+            HttpEntity<Void>(bearerHeaders(s.ownerToken)),
+        ).body!!
+        assertThat(fresh["version"]).isEqualTo(1)
     }
 }

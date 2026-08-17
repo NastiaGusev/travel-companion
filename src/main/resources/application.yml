@@ -10,7 +10,9 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
-
+  mvc:
+    problemdetails:
+      enabled: true
 app:
   jwt:
     secret: ${JWT_SECRET}
