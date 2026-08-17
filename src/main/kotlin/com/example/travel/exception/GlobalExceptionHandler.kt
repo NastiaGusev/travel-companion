@@ -1,7 +1,7 @@
 package com.example.travel.exception
 
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.springframework.http.ProblemDetail
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -11,34 +11,50 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException::class)
-    fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<Map<String, String?>> =
-        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to ex.message))
+    fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail =
+        problem(HttpStatus.BAD_REQUEST, "Invalid request", "BAD_REQUEST", ex.message)
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, String?>> {
-        val errors = ex.bindingResult.fieldErrors.associate { it.field to it.defaultMessage }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors)
+    fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
+        val fieldErrors = ex.bindingResult.fieldErrors
+            .associate { it.field to (it.defaultMessage ?: "invalid") }
+        return problem(
+            HttpStatus.BAD_REQUEST, "Validation failed", "VALIDATION_FAILED",
+            "One or more fields are invalid.",
+        ).apply { setProperty("errors", fieldErrors) }
     }
 
     @ExceptionHandler(NoSuchElementException::class)
-    fun handleNotFound(ex: NoSuchElementException): ResponseEntity<Map<String, String?>> =
-        ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to ex.message))
+    fun handleNotFound(ex: NoSuchElementException): ProblemDetail =
+        problem(HttpStatus.NOT_FOUND, "Not found", "NOT_FOUND", ex.message)
 
     @ExceptionHandler(InvalidCredentialsException::class)
-    fun handleInvalidCredentials(ex: InvalidCredentialsException): ResponseEntity<Map<String, String?>> =
-        ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("error" to ex.message))
+    fun handleInvalidCredentials(ex: InvalidCredentialsException): ProblemDetail =
+        problem(HttpStatus.UNAUTHORIZED, "Invalid credentials", "INVALID_CREDENTIALS", ex.message)
 
     @ExceptionHandler(EmailAlreadyExistsException::class)
-    fun handleEmailExists(ex: EmailAlreadyExistsException): ResponseEntity<Map<String, String?>> =
-        ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("error" to ex.message))
+    fun handleEmailExists(ex: EmailAlreadyExistsException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, "Email already registered", "EMAIL_EXISTS", ex.message)
 
     @ExceptionHandler(AccessDeniedException::class)
-    fun handleAccessDenied(ex: AccessDeniedException): ResponseEntity<Map<String, String?>> =
-        ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to ex.message))
+    fun handleAccessDenied(ex: AccessDeniedException): ProblemDetail =
+        problem(HttpStatus.FORBIDDEN, "Access denied", "ACCESS_DENIED", ex.message)
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException::class)
-    fun handleOptimisticLock(ex: ObjectOptimisticLockingFailureException): ResponseEntity<Map<String, String?>> =
-        ResponseEntity.status(HttpStatus.CONFLICT).body(
-            mapOf("error" to "This item was modified by someone else. Please reload and try again."),
+    fun handleOptimisticLock(ex: ObjectOptimisticLockingFailureException): ProblemDetail =
+        problem(
+            HttpStatus.CONFLICT, "Version conflict", "VERSION_CONFLICT",
+            "This item was modified by someone else. Please reload and try again.",
         )
+
+    private fun problem(
+        status: HttpStatus,
+        title: String,
+        code: String,
+        detail: String?,
+    ): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(status, detail ?: title).apply {
+            this.title = title
+            setProperty("code", code)
+        }
 }
