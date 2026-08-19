@@ -17,7 +17,28 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: 3600000
-
+google:
+  places:
+    api-key: ${GOOGLE_PLACES_API_KEY}
+    base-url: https://places.googleapis.com/v1
+resilience4j:
+  retry:
+    instances:
+      googlePlaces:
+        max-attempts: 3
+        wait-duration: 300ms
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+  circuitbreaker:
+    instances:
+      googlePlaces:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        ignore-exceptions:
+          - java.util.NoSuchElementException
 management:
   endpoints:
     web:

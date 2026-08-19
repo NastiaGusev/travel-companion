@@ -1,5 +1,6 @@
 package com.example.travel.stop
 
+import com.example.travel.client.googlePlaces.PlacesClient
 import com.example.travel.model.entity.Stop
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.StopRepository
@@ -18,6 +19,7 @@ class StopServiceTest {
         mock(StopRepository::class.java),
         mock(ItineraryDayRepository::class.java),
         mock(TripAccessService::class.java),
+        mock(PlacesClient::class.java),
     )
 
     private fun stop(
@@ -26,7 +28,7 @@ class StopServiceTest {
         createdAt: OffsetDateTime = OffsetDateTime.now(),
     ) = Stop(
         dayId = UUID.randomUUID(),
-        name = name,
+        title = name,
         position = 0,
         startTime = startTime,
         endTime = null,
@@ -42,7 +44,7 @@ class StopServiceTest {
                 stop("Evening", LocalTime.of(19, 0)),
             )
         )
-        assertThat(result.map { it.name }).containsExactly("Morning", "Noon", "Evening")
+        assertThat(result.map { it.title }).containsExactly("Morning", "Noon", "Evening")
     }
 
     @Test
@@ -53,7 +55,7 @@ class StopServiceTest {
                 stop("Timed", LocalTime.of(9, 0)),
             )
         )
-        assertThat(result.map { it.name }).containsExactly("Timed", "Untimed")
+        assertThat(result.map { it.title }).containsExactly("Timed", "Untimed")
     }
 
     @Test
@@ -66,7 +68,7 @@ class StopServiceTest {
                 stop("First", nine, createdAt = t0),
             )
         )
-        assertThat(result.map { it.name }).containsExactly("First", "Second")
+        assertThat(result.map { it.title }).containsExactly("First", "Second")
     }
 
     @Test
@@ -78,7 +80,7 @@ class StopServiceTest {
                 stop("Untimed A", null, createdAt = t0),
             )
         )
-        assertThat(result.map { it.name }).containsExactly("Untimed A", "Untimed B")
+        assertThat(result.map { it.title }).containsExactly("Untimed A", "Untimed B")
     }
 
     @Test
@@ -91,13 +93,13 @@ class StopServiceTest {
                 stop("Second", null, createdAt = t0.plusSeconds(1)),
             )
         )
-        assertThat(result.map { it.name }).containsExactly("First", "Second", "Third")
+        assertThat(result.map { it.title }).containsExactly("First", "Second", "Third")
     }
 
     @Test
     fun `a single stop is returned as-is`() {
         val result = service.orderStops(listOf(stop("Only", LocalTime.of(10, 0))))
-        assertThat(result.map { it.name }).containsExactly("Only")
+        assertThat(result.map { it.title }).containsExactly("Only")
     }
 
     @Test

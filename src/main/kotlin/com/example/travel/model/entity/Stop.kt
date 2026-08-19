@@ -13,7 +13,7 @@ class Stop(
     var dayId: UUID,
 
     @Column(nullable = false)
-    var name: String,
+    var title: String,
 
     @Column(nullable = false)
     var position: Int,
@@ -26,6 +26,9 @@ class Stop(
 
     @Column(columnDefinition = "TEXT")
     var notes: String? = null,
+
+    @Embedded
+    var place: Place? = null,
 ) {
     @Id
     @GeneratedValue
@@ -39,3 +42,19 @@ class Stop(
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }
+
+@Embeddable
+class Place(
+    @Column(name = "place_name")
+    var placeName: String? = null,
+    @Column(name = "google_place_id")
+    var placeId: String? = null,
+    @Column(name = "place_latitude")
+    var latitude: Double? = null,
+    @Column(name = "place_longitude")
+    var longitude: Double? = null,
+    @Column(name = "place_address", columnDefinition = "TEXT")
+    var address: String? = null,
+    @Column(name = "place_category")
+    var category: String? = null,
+)

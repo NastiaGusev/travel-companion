@@ -1,5 +1,6 @@
 package com.example.travel.exception
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.orm.ObjectOptimisticLockingFailureException
@@ -45,6 +46,13 @@ class GlobalExceptionHandler {
         problem(
             HttpStatus.CONFLICT, "Version conflict", "VERSION_CONFLICT",
             "This item was modified by someone else. Please reload and try again.",
+        )
+
+    @ExceptionHandler(PlacesUnavailableException::class, CallNotPermittedException::class)
+    fun handlePlacesUnavailable(ex: Exception): ProblemDetail =
+        problem(
+            HttpStatus.SERVICE_UNAVAILABLE, "Service temporarily unavailable",
+            "PLACES_UNAVAILABLE", "Place lookup is temporarily unavailable. Please try again shortly."
         )
 
     private fun problem(

@@ -15,8 +15,6 @@ class Trip(
     @Column(nullable = false)
     var title: String,
 
-    var destination: String? = null,
-
     @Column(name = "start_date")
     var startDate: LocalDate? = null,
 
@@ -25,6 +23,9 @@ class Trip(
 
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
+
+    @Embedded
+    var destination: Destination? = null,
 ) {
     @Id
     @GeneratedValue
@@ -42,3 +43,15 @@ class Trip(
     @Column(nullable = false)
     var version: Long = 0
 }
+
+@Embeddable
+class Destination(
+    @Column(name = "place_name")
+    var placeName: String? = null,
+    @Column(name = "google_place_id")
+    var placeId: String? = null,
+    @Column(name = "place_latitude")
+    var latitude: Double? = null,
+    @Column(name = "place_longitude")
+    var longitude: Double? = null,
+)

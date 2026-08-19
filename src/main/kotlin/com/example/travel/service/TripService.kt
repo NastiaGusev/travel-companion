@@ -1,7 +1,10 @@
 package com.example.travel.service
 
+import com.example.travel.client.googlePlaces.PlacesClient
+import com.example.travel.model.dto.DestinationDto
 import com.example.travel.model.dto.TripRequest
 import com.example.travel.model.dto.TripResponse
+import com.example.travel.model.entity.Destination
 import com.example.travel.model.entity.Trip
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.TripRepository
@@ -9,23 +12,31 @@ import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
-import java.util.UUID
+import java.util.*
 
 @Service
 class TripService(
     private val tripRepository: TripRepository,
     private val dayRepository: ItineraryDayRepository,
     private val tripAccessService: TripAccessService,
-    ) {
+    private val placesClient: PlacesClient
+) {
     fun create(userId: UUID, request: TripRequest): TripResponse {
         validateDates(request.startDate, request.endDate)
+        val anchor = request.destinationPlaceId?.let { placesClient.details(it) }
+
         val trip = Trip(
             userId = userId,
             title = request.title,
-            destination = request.destination,
+            description = request.description,
             startDate = request.startDate,
             endDate = request.endDate,
-            description = request.description,
+            destination = Destination(
+                placeName = request.destinationName ?: anchor?.name,
+                placeId = anchor?.placeId,
+                latitude = anchor?.latitude,
+                longitude = anchor?.longitude,
+            ),
         )
         return tripRepository.save(trip).toResponse()
     }
@@ -58,20 +69,33 @@ class TripService(
                 )
             }
         }
+        val anchor = request.destinationPlaceId?.let { placesClient.details(it) }
 
         trip.title = request.title
-        trip.destination = request.destination
         trip.startDate = request.startDate
         trip.endDate = request.endDate
         trip.description = request.description
         trip.updatedAt = OffsetDateTime.now()
+        trip.destination = Destination(
+            placeName = request.destinationName ?: anchor?.name,
+            placeId = anchor?.placeId,
+            latitude = anchor?.latitude,
+            longitude = anchor?.longitude
+        )
         return tripRepository.saveAndFlush(trip).toResponse()
     }
 
     private fun Trip.toResponse() = TripResponse(
         id = id!!,
         title = title,
-        destination = destination,
+        destination = destination?.let {
+            DestinationDto(
+                name = it.placeName,
+                placeId = it.placeId,
+                latitude = it.latitude,
+                longitude = it.longitude,
+            )
+        },
         startDate = startDate,
         endDate = endDate,
         description = description,
