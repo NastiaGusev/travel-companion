@@ -8,6 +8,7 @@ import com.example.travel.client.googlePlaces.dto.LocationBias
 import com.example.travel.client.googlePlaces.dto.PlaceDetailsResponse
 import com.example.travel.client.googlePlaces.dto.PlacePrediction
 import com.example.travel.client.googlePlaces.dto.ResolvedPlaceData
+import com.example.travel.exception.PlaceNotFoundException
 import com.example.travel.exception.PlacesUnavailableException
 import org.slf4j.LoggerFactory
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
@@ -15,6 +16,7 @@ import io.github.resilience4j.retry.annotation.Retry
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 
@@ -61,11 +63,13 @@ class PlacesClient(
                 .header("X-Goog-FieldMask", "id,displayName,location,formattedAddress,types")
                 .retrieve()
                 .body<PlaceDetailsResponse>()
+        } catch (_: HttpClientErrorException.NotFound) {
+            throw PlaceNotFoundException("Place not found: $placeId")
         } catch (ex: NoSuchElementException) {
             throw ex
         } catch (ex: Exception) {
             throw PlacesUnavailableException("Place lookup failed", ex)
-        } ?: throw NoSuchElementException("Place not found: $placeId")
+        } ?: throw PlaceNotFoundException("Place not found: $placeId")
 
         return ResolvedPlaceData(
             placeId = response.id,

@@ -55,6 +55,10 @@ class GlobalExceptionHandler {
             "PLACES_UNAVAILABLE", "Place lookup is temporarily unavailable. Please try again shortly."
         )
 
+    @ExceptionHandler(PlaceNotFoundException::class)
+    fun handlePlaceNotFound(ex: PlaceNotFoundException): ProblemDetail =
+        problem(HttpStatus.NOT_FOUND, "Place not found", "PLACE_NOT_FOUND", ex.message)
+
     private fun problem(
         status: HttpStatus,
         title: String,

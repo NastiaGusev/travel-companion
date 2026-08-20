@@ -30,6 +30,8 @@ resilience4j:
         retry-exceptions:
           - org.springframework.web.client.HttpServerErrorException
           - java.io.IOException
+        ignore-exceptions:
+          - com.example.travel.exception.PlaceNotFoundException
   circuitbreaker:
     instances:
       googlePlaces:
@@ -38,7 +40,7 @@ resilience4j:
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
         ignore-exceptions:
-          - java.util.NoSuchElementException
+          - com.example.travel.exception.PlaceNotFoundException
 management:
   endpoints:
     web:
