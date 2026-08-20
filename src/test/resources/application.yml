@@ -1,0 +1,4 @@
+google:
+  places:
+    api-key: test-key
+    base-url: http://localhost:0

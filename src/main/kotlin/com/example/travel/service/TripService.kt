@@ -23,7 +23,6 @@ class TripService(
 ) {
     fun create(userId: UUID, request: TripRequest): TripResponse {
         validateDates(request.startDate, request.endDate)
-        val anchor = request.destinationPlaceId?.let { placesClient.details(it) }
 
         val trip = Trip(
             userId = userId,
@@ -31,12 +30,7 @@ class TripService(
             description = request.description,
             startDate = request.startDate,
             endDate = request.endDate,
-            destination = Destination(
-                placeName = request.destinationName ?: anchor?.name,
-                placeId = anchor?.placeId,
-                latitude = anchor?.latitude,
-                longitude = anchor?.longitude,
-            ),
+            destination = resolveDestination(request),
         )
         return tripRepository.save(trip).toResponse()
     }
@@ -69,20 +63,36 @@ class TripService(
                 )
             }
         }
-        val anchor = request.destinationPlaceId?.let { placesClient.details(it) }
 
         trip.title = request.title
         trip.startDate = request.startDate
         trip.endDate = request.endDate
         trip.description = request.description
         trip.updatedAt = OffsetDateTime.now()
-        trip.destination = Destination(
-            placeName = request.destinationName ?: anchor?.name,
-            placeId = anchor?.placeId,
-            latitude = anchor?.latitude,
-            longitude = anchor?.longitude
-        )
+        trip.destination = resolveDestination(request)
+
         return tripRepository.saveAndFlush(trip).toResponse()
+    }
+
+    private fun resolveDestination(request: TripRequest): Destination? {
+        val anchor = request.destinationPlaceId?.let { placesClient.details(it) }
+        return when {
+            anchor != null -> Destination(
+                placeName = request.destinationName ?: anchor.name,
+                placeId = anchor.placeId,
+                latitude = anchor.latitude,
+                longitude = anchor.longitude,
+            )
+
+            request.destinationName != null -> Destination(
+                placeName = request.destinationName,
+                placeId = null,
+                latitude = null,
+                longitude = null,
+            )
+
+            else -> null
+        }
     }
 
     private fun Trip.toResponse() = TripResponse(

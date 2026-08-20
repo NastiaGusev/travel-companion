@@ -27,27 +27,16 @@ class StopService(
         verifyDayOwnership(dayId, userId)
         validateTimes(request.startTime, request.endTime)
 
-        val resolvedPlaceData: ResolvedPlaceData? = request.placeId?.let { placesClient.details(it) }
-        val stopTitle = request.title ?: resolvedPlaceData?.name
-        ?: throw IllegalArgumentException("A stop needs a name or a placeId")
+        val resolved = resolvePlace(request)
 
         val stop = Stop(
             dayId = dayId,
-            title = stopTitle,
+            title = resolveStopTitle(request, resolved),
             position = 0,
             startTime = request.startTime,
             endTime = request.endTime,
             notes = request.notes,
-            place = resolvedPlaceData?.let {
-                Place(
-                    placeName = it.name,
-                    placeId = it.placeId,
-                    latitude = it.latitude,
-                    longitude = it.longitude,
-                    address = it.address,
-                    category = it.category,
-                )
-            },
+            place = resolved?.toPlace(),
         )
         val saved = stopRepository.saveAndFlush(stop)
         resequence(dayId)
@@ -60,26 +49,14 @@ class StopService(
         validateTimes(request.startTime, request.endTime)
 
         val timeChanged = stop.startTime != request.startTime || stop.endTime != request.endTime
-        val resolvedPlaceData: ResolvedPlaceData? = request.placeId?.let { placesClient.details(it) }
+        val resolved = resolvePlace(request)
 
-        val stopTitle = request.title ?: resolvedPlaceData?.name
-        ?: throw IllegalArgumentException("A stop needs a name or a placeId")
-
-        stop.title = stopTitle
+        stop.title = resolveStopTitle(request, resolved)
         stop.startTime = request.startTime
         stop.endTime = request.endTime
         stop.notes = request.notes
         stop.updatedAt = OffsetDateTime.now()
-        stop.place = resolvedPlaceData?.let {
-            Place(
-                placeName = it.name,
-                placeId = it.placeId,
-                latitude = it.latitude,
-                longitude = it.longitude,
-                address = it.address,
-                category = it.category,
-            )
-        }
+        stop.place = resolved?.toPlace()
 
         stopRepository.saveAndFlush(stop)
 
@@ -116,6 +93,23 @@ class StopService(
         verifyDayOwnership(stop.dayId, userId)
         return stop
     }
+
+    private fun resolveStopTitle(request: StopRequest, resolved: ResolvedPlaceData?): String =
+        request.title?.takeIf { it.isNotBlank() }
+            ?: resolved?.name
+            ?: throw IllegalArgumentException("A stop needs a name or a placeId")
+
+    private fun resolvePlace(request: StopRequest): ResolvedPlaceData? =
+        request.placeId?.let { placesClient.details(it) }
+
+    private fun ResolvedPlaceData.toPlace() = Place(
+        placeName = name,
+        placeId = placeId,
+        latitude = latitude,
+        longitude = longitude,
+        address = address,
+        category = category,
+    )
 
     private fun Stop.toResponse() = StopResponse(
         id = id!!,

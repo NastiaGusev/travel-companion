@@ -30,14 +30,14 @@ class TripIntegrationTest: IntegrationTestBase() {
     private fun createTrip(
         token: String,
         title: String = "Japan 2026",
-        destination: String? = "Tokyo",
+        destinationName: String? = "Tokyo",
         startDate: LocalDate? = LocalDate.of(2026, 5, 1),
         endDate: LocalDate? = LocalDate.of(2026, 5, 10),
         description: String? = "Cherry blossoms",
     ): Map<*, *>? {
         val body = mapOf(
             "title" to title,
-            "destination" to destination,
+            "destinationName" to destinationName,
             "startDate" to startDate?.toString(),
             "endDate" to endDate?.toString(),
             "description" to description,
@@ -51,6 +51,10 @@ class TripIntegrationTest: IntegrationTestBase() {
             "/api/trips/$id", HttpMethod.GET, HttpEntity<Void>(bearerHeaders(token)),
         )
 
+    @Suppress("UNCHECKED_CAST")
+    private fun destinationOf(body: Map<*, *>?): Map<String, Any?>? =
+        body?.get("destination") as? Map<String, Any?>
+
     // ---- happy path: full CRUD cycle ----
 
     @Test
@@ -59,10 +63,10 @@ class TripIntegrationTest: IntegrationTestBase() {
         val entity = HttpEntity(
             mapOf(
                 "title" to "Japan 2026",
-                "destination" to "Tokyo",
                 "startDate" to "2026-05-01",
                 "endDate" to "2026-05-10",
                 "description" to "Cherry blossoms",
+                "destinationName" to "Tokyo",
             ),
             bearerHeaders(token),
         )
@@ -71,7 +75,20 @@ class TripIntegrationTest: IntegrationTestBase() {
         assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         assertThat(response.body?.get("id")).isNotNull()
         assertThat(response.body?.get("title")).isEqualTo("Japan 2026")
-        assertThat(response.body?.get("destination")).isEqualTo("Tokyo")
+        assertThat(destinationOf(response.body)?.get("name")).isEqualTo("Tokyo")
+    }
+
+    @Test
+    fun `create without a destination has no anchor`() {
+        val token = rest.registerAndGetToken()
+        val entity = HttpEntity(
+            mapOf("title" to "No dest", "startDate" to "2026-05-01", "endDate" to "2026-05-10"),
+            bearerHeaders(token),
+        )
+        val response = rest.exchange("/api/trips", HttpMethod.POST, entity, Map::class.java)
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
+        assertThat(response.body?.get("destination")).isNull()
     }
 
     @Test
@@ -122,7 +139,7 @@ class TripIntegrationTest: IntegrationTestBase() {
         val entity = HttpEntity(
             mapOf(
                 "title" to "Japan (updated)",
-                "destination" to "Kyoto",
+                "destinationName" to "Kyoto",
                 "startDate" to "2026-05-01",
                 "endDate" to "2026-05-12",
                 "description" to "Extended",
@@ -134,7 +151,7 @@ class TripIntegrationTest: IntegrationTestBase() {
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
         assertThat(response.body?.get("title")).isEqualTo("Japan (updated)")
-        assertThat(response.body?.get("destination")).isEqualTo("Kyoto")
+        assertThat(destinationOf(response.body)?.get("name")).isEqualTo("Kyoto")
     }
 
     @Test
@@ -157,7 +174,7 @@ class TripIntegrationTest: IntegrationTestBase() {
     fun `create with a blank title returns 400`() {
         val token = rest.registerAndGetToken()
         val entity = HttpEntity(
-            mapOf("title" to "", "destination" to "Tokyo"),
+            mapOf("title" to "", "destinationName" to "Tokyo"),
             bearerHeaders(token),
         )
         val response = rest.exchange("/api/trips", HttpMethod.POST, entity, Map::class.java)
@@ -261,6 +278,31 @@ class TripIntegrationTest: IntegrationTestBase() {
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
     }
+
+    // ---- destination anchor: clearing on full-replace update ----
+
+    @Test
+    fun `update without a destination clears the anchor`() {
+        val token = rest.registerAndGetToken()
+        val id = createTrip(token)?.get("id")!!
+
+        // PUT is a full replace: omitting the destination clears it.
+        val entity = HttpEntity(
+            mapOf(
+                "title" to "Japan 2026",
+                "startDate" to "2026-05-01",
+                "endDate" to "2026-05-10",
+                "version" to 0,
+            ),
+            bearerHeaders(token),
+        )
+        val response = rest.exchange("/api/trips/$id", HttpMethod.PUT, entity, Map::class.java)
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(response.body?.get("destination")).isNull()
+    }
+
+    // ---- optimistic locking (409 / 400) ----
 
     @Test
     fun `updating with a stale version returns 409`() {
