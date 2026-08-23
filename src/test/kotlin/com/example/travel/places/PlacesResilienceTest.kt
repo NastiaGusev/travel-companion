@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.CacheManager
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.web.client.HttpServerErrorException
@@ -35,6 +36,8 @@ class PlacesResilienceTest : IntegrationTestBase() {
 
     @Autowired
     lateinit var circuitBreakerRegistry: CircuitBreakerRegistry
+
+    @Autowired lateinit var cacheManager: CacheManager
 
     private val breaker: CircuitBreaker
         get() = circuitBreakerRegistry.circuitBreaker("googlePlaces")
@@ -82,6 +85,7 @@ class PlacesResilienceTest : IntegrationTestBase() {
     fun reset() {
         wireMock.resetAll()
         breaker.reset()
+        cacheManager.getCache("placeDetails")?.clear()
     }
 
     private val anyPlaceDetails get() = get(urlPathMatching("/v1/places/[^:].*"))
@@ -133,5 +137,22 @@ class PlacesResilienceTest : IntegrationTestBase() {
         val results = placesClient.autocomplete("eiffel", biasLat = 22.3, biasLng = 22.4)
 
         assertThat(results).isEmpty()
+    }
+
+    @Test
+    fun `details caches by placeId, second call does not hit the wire`() {
+        wireMock.stubFor(
+            get(urlPathEqualTo("/v1/places/ChIJcached"))
+                .willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""{"id":"ChIJcached","displayName":{"text":"Eiffel Tower"}}"""))
+        )
+
+        val first = placesClient.details("ChIJcached")
+        val second = placesClient.details("ChIJcached")
+
+        assertThat(second).isEqualTo(first)
+        wireMock.verify(1, getRequestedFor(urlPathMatching("/v1/places/.*"))) // only ONE wire call
     }
 }

@@ -8,11 +8,13 @@ import com.example.travel.client.googlePlaces.dto.LocationBias
 import com.example.travel.client.googlePlaces.dto.PlaceDetailsResponse
 import com.example.travel.client.googlePlaces.dto.PlacePrediction
 import com.example.travel.client.googlePlaces.dto.ResolvedPlaceData
+import com.example.travel.config.CacheConfig.Companion.PLACE_DETAILS
 import com.example.travel.exception.PlaceNotFoundException
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.retry.annotation.Retry
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
@@ -52,6 +54,7 @@ class PlacesClient(
     }
 
     /** Full details for a chosen place. Field mask keeps this in the cheap tier. */
+    @Cacheable(cacheNames = [PLACE_DETAILS], key = "#placeId")
     @CircuitBreaker(name = "googlePlaces")
     @Retry(name = "googlePlaces")
     fun details(placeId: String): ResolvedPlaceData {
