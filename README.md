@@ -1,7 +1,5 @@
 # AI Travel Companion — Backend Service
-A backend service for planning and organizing trips — built as a production-quality showcase of backend engineering in Kotlin and Spring Boot.
-## Overview
-A REST API for managing trips, day-by-day itineraries, and stops, with JWT authentication and PostgreSQL persistence. Every resource is ownership-scoped and shareable with other users, concurrent edits are guarded with optimistic locking, the schema is migration-managed, and the whole stack runs locally with a single command and is deployed to AWS with automated CI/CD.
+A REST API for managing trips, day-by-day itineraries, and stops grounded in real places via Google Places, with JWT authentication and PostgreSQL persistence. Every resource is ownership-scoped and shareable with other users, concurrent edits are guarded with optimistic locking, the schema is migration-managed, and the whole stack runs locally with a single command and is deployed to AWS with automated CI/CD.
 ## Tech stack
 - **Language:** Kotlin
 - **Framework:** Spring Boot 4.1
@@ -9,6 +7,7 @@ A REST API for managing trips, day-by-day itineraries, and stops, with JWT authe
 - **Persistence:** JPA / Hibernate
 - **Auth:** Spring Security + JWT
 - **Docs:** OpenAPI / Swagger UI (springdoc)
+- **External APIs:** Google Places (New), with Resilience4j (retry + circuit breaker) and Caffeine caching
 - **Testing:** JUnit, Testcontainers (integration), unit tests
 - **Tooling:** Docker, Docker Compose
 - **Infrastructure:** AWS (ECS Fargate, ECR, RDS, SSM Parameter Store, IAM)
@@ -22,6 +21,20 @@ Trips can be shared with other registered users by email. Each trip has one **ow
 Concurrent edits are handled explicitly: form-edited resources (`Trip`, `ItineraryDay`) use **optimistic locking** via a JPA `@Version` column — a stale version returns `409 Conflict`. Ordered resources (`Stop`) are resequenced on every change, so they rely on the transaction and a `unique(day_id, position)` constraint instead of row versioning.
 
 Collaborator endpoints: `POST` / `GET` / `DELETE` on `/api/trips/{tripId}/collaborators`.
+
+## Place search & geocoding
+Trips and stops are grounded in real places via the **Google Places API (New)**, proxied
+through the backend so the API key stays server-side. Autocomplete search
+(`GET /api/places/search?query=`, biased toward the trip's destination when set) powers
+picking destinations and adding stops; when a stop or destination is created with a place id,
+the server resolves its coordinates and address and snapshots them onto the record.
+
+Outbound calls are wrapped with **Resilience4j** — retry on transient failures plus a circuit
+breaker that fast-fails when Google is down (a missing place returns `404 PLACE_NOT_FOUND`;
+an outage returns `503 PLACES_UNAVAILABLE`). Place details are cached with **Caffeine**
+(keyed by place id, 24h TTL), so repeating the same lookup skips the network — and the
+resilience layer — entirely. Google is never called from tests: the client is stubbed with
+**WireMock** at the HTTP layer.
 
 ## Error handling
 All errors return [RFC 7807 Problem Details](https://datatracker.ietf.org/doc/html/rfc7807) (`application/problem+json`) with a consistent shape — `title`, `status`, `detail`, plus a machine-readable `code` clients can switch on. For example, a stale-version edit returns `409` with `code: VERSION_CONFLICT`, so a client can prompt the user to reload rather than parsing error text.
