@@ -1,5 +1,6 @@
 package com.example.travel.trip
 
+import com.example.travel.client.googlePlaces.PlacesClient
 import com.example.travel.model.dto.TripRequest
 import com.example.travel.model.entity.ItineraryDay
 import com.example.travel.model.entity.Trip
@@ -30,7 +31,15 @@ class TripServiceTest {
     @Mock
     lateinit var tripAccessService: TripAccessService
 
-    private val service by lazy { TripService(tripRepository, dayRepository, tripAccessService) }
+    @Mock
+    lateinit var placesClient: PlacesClient
+
+    private val service by lazy { TripService(
+        tripRepository,
+        dayRepository,
+        tripAccessService,
+        placesClient
+    ) }
 
     @Test
     fun `update rejects shrinking a trip below its existing day count`() {

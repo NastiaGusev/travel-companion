@@ -29,13 +29,13 @@ class StopIntegrationTest : IntegrationTestBase() {
     private fun createStop(
         token: String,
         dayId: Any,
-        name: String,
+        title: String,
         startTime: String? = null,
         endTime: String? = null,
         notes: String? = null,
     ): Map<*, *>? {
         val entity = HttpEntity(
-            mapOf("name" to name, "startTime" to startTime, "endTime" to endTime, "notes" to notes),
+            mapOf("title" to title, "startTime" to startTime, "endTime" to endTime, "notes" to notes),
             bearerHeaders(token),
         )
         return rest.exchange("/api/days/$dayId/stops", HttpMethod.POST, entity, Map::class.java).body
@@ -53,14 +53,14 @@ class StopIntegrationTest : IntegrationTestBase() {
         val (token, dayId) = setupDay()
 
         val entity = HttpEntity(
-            mapOf("name" to "Museum", "startTime" to "10:00:00"),
+            mapOf("title" to "Museum", "startTime" to "10:00:00"),
             bearerHeaders(token),
         )
         val response = rest.exchange("/api/days/$dayId/stops", HttpMethod.POST, entity, Map::class.java)
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         assertThat(response.body?.get("position")).isEqualTo(1)
-        assertThat(response.body?.get("name")).isEqualTo("Museum")
+        assertThat(response.body?.get("title")).isEqualTo("Museum")
         assertThat(response.body?.get("dayId")).isEqualTo(dayId)
     }
 
@@ -77,7 +77,7 @@ class StopIntegrationTest : IntegrationTestBase() {
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val byPosition = response.body!!.sortedBy { it["position"] as Int }
-        assertThat(byPosition.map { it["name"] })
+        assertThat(byPosition.map { it["title"] })
             .containsExactly("Breakfast", "Lunch", "Dinner")
         assertThat(byPosition.map { it["position"] }).containsExactly(1, 2, 3)
     }
@@ -92,7 +92,7 @@ class StopIntegrationTest : IntegrationTestBase() {
         val response = listStops(token, dayId)
 
         val byPosition = response.body!!.sortedBy { it["position"] as Int }
-        assertThat(byPosition.map { it["name"] }).containsExactly("Timed", "Untimed")
+        assertThat(byPosition.map { it["title"] }).containsExactly("Timed", "Untimed")
     }
 
     @Test
@@ -105,8 +105,8 @@ class StopIntegrationTest : IntegrationTestBase() {
         val response = listStops(token, dayId)
         val byPosition = response.body!!.sortedBy { it["position"] as Int }
 
-        assertThat(byPosition.first { it["name"] == "Morning" }["position"]).isEqualTo(1)
-        assertThat(byPosition.first { it["name"] == "Noon" }["position"]).isEqualTo(2)
+        assertThat(byPosition.first { it["title"] == "Morning" }["position"]).isEqualTo(1)
+        assertThat(byPosition.first { it["title"] == "Noon" }["position"]).isEqualTo(2)
     }
 
     // ---- update re-triggers ordering when time changes ----
@@ -120,7 +120,7 @@ class StopIntegrationTest : IntegrationTestBase() {
         // "Wanderer" is currently position 2 (18:00 after 10:00). Move it to 06:00 → should become position 1.
 
         val entity = HttpEntity(
-            mapOf("name" to "Wanderer", "startTime" to "06:00:00"),
+            mapOf("title" to "Wanderer", "startTime" to "06:00:00"),
             bearerHeaders(token),
         )
         val updated = rest.exchange("/api/stops/$lateId", HttpMethod.PUT, entity, Map::class.java)
@@ -145,16 +145,16 @@ class StopIntegrationTest : IntegrationTestBase() {
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val stops = response.body!!.sortedBy { it["position"] as Int }
-        assertThat(stops.map { it["name"] }).containsExactly("A", "C")
+        assertThat(stops.map { it["title"] }).containsExactly("A", "C")
         assertThat(stops.map { it["position"] }).containsExactly(1, 2)
     }
 
     // ---- validation (400) ----
 
     @Test
-    fun `create with a blank name returns 400`() {
+    fun `create with a blank title returns 400`() {
         val (token, dayId) = setupDay()
-        val entity = HttpEntity(mapOf("name" to "", "startTime" to "10:00:00"), bearerHeaders(token))
+        val entity = HttpEntity(mapOf("title" to "", "startTime" to "10:00:00"), bearerHeaders(token))
         val response = rest.exchange("/api/days/$dayId/stops", HttpMethod.POST, entity, Map::class.java)
         assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
@@ -163,7 +163,7 @@ class StopIntegrationTest : IntegrationTestBase() {
     fun `create with end time not after start time returns 400`() {
         val (token, dayId) = setupDay()
         val entity = HttpEntity(
-            mapOf("name" to "Bad", "startTime" to "10:00:00", "endTime" to "09:00:00"),
+            mapOf("title" to "Bad", "startTime" to "10:00:00", "endTime" to "09:00:00"),
             bearerHeaders(token),
         )
         val response = rest.exchange("/api/days/$dayId/stops", HttpMethod.POST, entity, Map::class.java)
@@ -176,7 +176,7 @@ class StopIntegrationTest : IntegrationTestBase() {
     fun `create without a token returns 401`() {
         val response = rest.postForEntity(
             "/api/days/${UUID.randomUUID()}/stops",
-            mapOf("name" to "x"),
+            mapOf("title" to "x"),
             Map::class.java,
         )
         assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
@@ -194,7 +194,7 @@ class StopIntegrationTest : IntegrationTestBase() {
     @Test
     fun `create on an unknown day returns 404`() {
         val token = rest.registerAndGetToken()
-        val entity = HttpEntity(mapOf("name" to "x"), bearerHeaders(token))
+        val entity = HttpEntity(mapOf("title" to "x"), bearerHeaders(token))
         val response = rest.exchange(
             "/api/days/${UUID.randomUUID()}/stops", HttpMethod.POST, entity, String::class.java,
         )
@@ -203,10 +203,10 @@ class StopIntegrationTest : IntegrationTestBase() {
 
     @Test
     fun `create on another users day returns 404`() {
-        val (tokenA, dayId) = setupDay()
+        val (_, dayId) = setupDay()
         val tokenB = rest.registerAndGetToken()
 
-        val entity = HttpEntity(mapOf("name" to "x"), bearerHeaders(tokenB))
+        val entity = HttpEntity(mapOf("title" to "x"), bearerHeaders(tokenB))
         val response = rest.exchange(
             "/api/days/$dayId/stops", HttpMethod.POST, entity, String::class.java,
         )
@@ -215,7 +215,7 @@ class StopIntegrationTest : IntegrationTestBase() {
 
     @Test
     fun `list on another users day returns 404`() {
-        val (tokenA, dayId) = setupDay()
+        val (_, dayId) = setupDay()
         val tokenB = rest.registerAndGetToken()
 
         val response = rest.exchange<String>(
@@ -230,9 +230,22 @@ class StopIntegrationTest : IntegrationTestBase() {
         val stopId = createStop(tokenA, dayId, "A", startTime = "10:00:00")?.get("id")!!
         val tokenB = rest.registerAndGetToken()
 
-        val entity = HttpEntity(mapOf("name" to "hijack"), bearerHeaders(tokenB))
-        val response = rest.exchange("/api/stops/$stopId", HttpMethod.PUT, entity, String::class.java)
+        val entity = HttpEntity(mapOf("title" to "hijack"), bearerHeaders(tokenB))
+        val response = rest.exchange<String>("/api/stops/$stopId", HttpMethod.PUT, entity)
         assertThat(response.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+    }
+
+    @Test
+    fun `update with a blank title and no place returns 400`() {
+        val (token, dayId) = setupDay()
+        val stopId = createStop(token, dayId, title = "Original")?.get("id")!!
+
+        val entity = HttpEntity(
+            mapOf("title" to "", "startTime" to "10:00:00"),
+            bearerHeaders(token),
+        )
+        val response = rest.exchange("/api/stops/$stopId", HttpMethod.PUT, entity, Map::class.java)
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
 
     @Test

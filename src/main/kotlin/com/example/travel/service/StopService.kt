@@ -1,7 +1,11 @@
 package com.example.travel.service
 
+import com.example.travel.client.googlePlaces.PlacesClient
+import com.example.travel.client.googlePlaces.dto.ResolvedPlaceData
+import com.example.travel.model.dto.PlaceDto
 import com.example.travel.model.dto.StopRequest
 import com.example.travel.model.dto.StopResponse
+import com.example.travel.model.entity.Place
 import com.example.travel.model.entity.Stop
 import com.example.travel.repository.ItineraryDayRepository
 import com.example.travel.repository.StopRepository
@@ -16,19 +20,23 @@ class StopService(
     private val stopRepository: StopRepository,
     private val dayRepository: ItineraryDayRepository,
     private val tripAccessService: TripAccessService,
-    ) {
+    private val placesClient: PlacesClient,
+) {
     @Transactional
     fun create(userId: UUID, dayId: UUID, request: StopRequest): StopResponse {
         verifyDayOwnership(dayId, userId)
         validateTimes(request.startTime, request.endTime)
 
+        val resolved = resolvePlace(request)
+
         val stop = Stop(
             dayId = dayId,
-            name = request.name,
+            title = resolveStopTitle(request, resolved),
             position = 0,
             startTime = request.startTime,
             endTime = request.endTime,
             notes = request.notes,
+            place = resolved?.toPlace(),
         )
         val saved = stopRepository.saveAndFlush(stop)
         resequence(dayId)
@@ -41,12 +49,15 @@ class StopService(
         validateTimes(request.startTime, request.endTime)
 
         val timeChanged = stop.startTime != request.startTime || stop.endTime != request.endTime
+        val resolved = resolvePlace(request)
 
-        stop.name = request.name
+        stop.title = resolveStopTitle(request, resolved)
         stop.startTime = request.startTime
         stop.endTime = request.endTime
         stop.notes = request.notes
         stop.updatedAt = OffsetDateTime.now()
+        stop.place = resolved?.toPlace()
+
         stopRepository.saveAndFlush(stop)
 
         if (timeChanged) {
@@ -83,9 +94,41 @@ class StopService(
         return stop
     }
 
+    private fun resolveStopTitle(request: StopRequest, resolved: ResolvedPlaceData?): String =
+        request.title?.takeIf { it.isNotBlank() }
+            ?: resolved?.name
+            ?: throw IllegalArgumentException("A stop needs a name or a placeId")
+
+    private fun resolvePlace(request: StopRequest): ResolvedPlaceData? =
+        request.placeId?.let { placesClient.details(it) }
+
+    private fun ResolvedPlaceData.toPlace() = Place(
+        placeName = name,
+        placeId = placeId,
+        latitude = latitude,
+        longitude = longitude,
+        address = address,
+        category = category,
+    )
+
     private fun Stop.toResponse() = StopResponse(
-        id = id!!, dayId = dayId, name = name, position = position,
-        startTime = startTime, endTime = endTime, notes = notes,
+        id = id!!,
+        dayId = dayId,
+        title = title,
+        position = position,
+        startTime = startTime,
+        endTime = endTime,
+        notes = notes,
+        place = place?.let {
+            PlaceDto(
+                name = it.placeName,
+                placeId = it.placeId,
+                latitude = it.latitude,
+                longitude = it.longitude,
+                address = it.address,
+                category = it.category,
+            )
+        },
     )
 
     private fun validateTimes(startTime: LocalTime?, endTime: LocalTime?) {

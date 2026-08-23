@@ -188,7 +188,7 @@ class CollaboratorIntegrationTest : IntegrationTestBase() {
         val response = rest.exchange(
             "/api/days/$dayId/stops",
             HttpMethod.POST,
-            HttpEntity(mapOf("name" to "Museum", "startTime" to "10:00:00"), bearerHeaders(s.editorToken)),
+            HttpEntity(mapOf("title" to "Museum", "startTime" to "10:00:00"), bearerHeaders(s.editorToken)),
             Map::class.java,
         )
         assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)

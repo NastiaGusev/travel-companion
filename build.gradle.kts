@@ -32,6 +32,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
+	implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+	implementation("org.springframework.boot:spring-boot-starter-cache")
+	implementation("com.github.ben-manes.caffeine:caffeine")
 
 	runtimeOnly("org.postgresql:postgresql")
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
@@ -48,6 +51,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-restclient")
 	testImplementation("org.springframework.boot:spring-boot-resttestclient")
 	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+	testImplementation("org.wiremock:wiremock-standalone:3.13.1")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

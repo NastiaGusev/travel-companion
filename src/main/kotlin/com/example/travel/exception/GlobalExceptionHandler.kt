@@ -1,11 +1,14 @@
 package com.example.travel.exception
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.ResourceAccessException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -46,6 +49,24 @@ class GlobalExceptionHandler {
             HttpStatus.CONFLICT, "Version conflict", "VERSION_CONFLICT",
             "This item was modified by someone else. Please reload and try again.",
         )
+
+    @ExceptionHandler(PlaceNotFoundException::class)
+    fun handlePlaceNotFound(e: PlaceNotFoundException): ProblemDetail =
+        ProblemDetail.forStatus(HttpStatus.NOT_FOUND).apply {
+            setProperty("code", "PLACE_NOT_FOUND")
+            detail = "The requested place could not be found."
+        }
+
+    @ExceptionHandler(
+        HttpServerErrorException::class,
+        ResourceAccessException::class,
+        CallNotPermittedException::class,
+    )
+    fun handlePlacesUnavailable(e: Exception): ProblemDetail =
+        ProblemDetail.forStatus(HttpStatus.SERVICE_UNAVAILABLE).apply {
+            setProperty("code", "PLACES_UNAVAILABLE")
+            detail = "Place lookup is temporarily unavailable."
+        }
 
     private fun problem(
         status: HttpStatus,
