@@ -2,7 +2,6 @@ package com.example.travel.places
 
 import com.example.travel.client.googlePlaces.PlacesClient
 import com.example.travel.exception.PlaceNotFoundException
-import com.example.travel.exception.PlacesUnavailableException
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.springframework.http.client.JdkClientHttpRequestFactory
+import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestClient
 import java.net.http.HttpClient
 
@@ -129,14 +129,14 @@ class PlacesClientMappingTest {
     }
 
     @Test
-    fun `details throws PlacesUnavailableException on server error`() {
+    fun `details throws HttpServerErrorException on server error`() {
         wireMock.stubFor(
             get(urlPathEqualTo("/places/ChIJboom"))
                 .willReturn(aResponse().withStatus(500))
         )
 
         assertThatThrownBy { client.details("ChIJboom") }
-            .isInstanceOf(PlacesUnavailableException::class.java)
+            .isInstanceOf(HttpServerErrorException::class.java)
     }
 
     @Test
