@@ -68,6 +68,13 @@ class GlobalExceptionHandler {
             detail = "Place lookup is temporarily unavailable."
         }
 
+    @ExceptionHandler(AiServiceUnavailableException::class)
+    fun handleAiServiceUnavailable(e: AiServiceUnavailableException): ProblemDetail =
+        ProblemDetail.forStatus(HttpStatus.SERVICE_UNAVAILABLE).apply {
+            setProperty("code", "AI_SERVICE_UNAVAILABLE")
+            detail = "AI extraction is temporarily unavailable. You can still add days and stops manually."
+        }
+
     private fun problem(
         status: HttpStatus,
         title: String,
