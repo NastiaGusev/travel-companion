@@ -16,12 +16,22 @@ services:
       timeout: 3s
       retries: 5
 
+  ai-service:
+    build: ./ai-service
+    container_name: travel-ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      EXTRACTOR_PROVIDER: ${EXTRACTOR_PROVIDER:-stub}
+
   app:
     build: .
     container_name: travel-app
     depends_on:
       postgres:
         condition: service_healthy
+      ai-service:
+        condition: service_started
     ports:
       - "8080:8080"
     environment:
@@ -30,6 +40,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+      AI_SERVICE_BASE_URL: http://ai-service:8000
 
 volumes:
   travel-pgdata:

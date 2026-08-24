@@ -8,10 +8,10 @@ import org.springframework.web.client.RestClient
 import java.net.http.HttpClient
 
 @Configuration
-class PlacesClientConfig {
+class AiServiceClientConfig {
     @Bean
-    fun placesRestClient(
-        @Value($$"${google.places.base-url}") baseUrl: String,
+    fun aiServiceRestClient(
+        @Value($$"${ai.service.base-url}") baseUrl: String,
     ): RestClient {
         val httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)

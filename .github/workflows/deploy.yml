@@ -9,10 +9,12 @@ on:
 env:
   AWS_REGION: eu-north-1
   ECR_REPOSITORY: travel-app
+  AI_ECR_REPOSITORY: travel-ai-service
   ECS_CLUSTER: travel-cluster
   ECS_SERVICE: travel-task-service-lawe3p3i
   ECS_TASK_FAMILY: travel-task
   CONTAINER_NAME: travel-app
+  AI_CONTAINER_NAME: ai-service
 
 jobs:
   test:
@@ -59,7 +61,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push ARM64 image
+      - name: Build and push app image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -71,24 +73,79 @@ jobs:
             -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
             --push .
 
+      - name: Build and push ai-service image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --provenance=false \
+            -t $ECR_REGISTRY/$AI_ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$AI_ECR_REPOSITORY:latest \
+            --push ./ai-service
+
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
             --task-definition ${{ env.ECS_TASK_FAMILY }} \
             --query taskDefinition > task-def.json
 
-      - name: Update image in task definition
-        id: task-def
+      - name: Ensure ai-service container is present
+        run: |
+          jq --arg region "${{ env.AWS_REGION }}" '
+            ((.containerDefinitions[] | select(.name == "${{ env.CONTAINER_NAME }}") | .logConfiguration.options["awslogs-group"]) // "/ecs/travel-task") as $logGroup |
+            if any(.containerDefinitions[]; .name == "${{ env.AI_CONTAINER_NAME }}") then
+              .
+            else
+              .containerDefinitions += [{
+                "name": "${{ env.AI_CONTAINER_NAME }}",
+                "image": "placeholder",
+                "essential": true,
+                "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+                "environment": [{"name": "EXTRACTOR_PROVIDER", "value": "stub"}],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": $logGroup,
+                    "awslogs-region": $region,
+                    "awslogs-stream-prefix": "ai-service"
+                  }
+                }
+              }]
+            end
+          ' task-def.json > task-def-tmp.json && mv task-def-tmp.json task-def.json
+
+      - name: Ensure app points at ai-service
+        run: |
+          jq '
+            .containerDefinitions |= map(
+              if .name == "${{ env.CONTAINER_NAME }}" then
+                .environment = ((.environment // []) | map(select(.name != "AI_SERVICE_BASE_URL")) + [{"name": "AI_SERVICE_BASE_URL", "value": "http://localhost:8000"}])
+              else . end
+            )
+          ' task-def.json > task-def-tmp.json && mv task-def-tmp.json task-def.json
+
+      - name: Update app image in task definition
+        id: render-app
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-def.json
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
+      - name: Update ai-service image in task definition
+        id: render-ai
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-app.outputs.task-definition }}
+          container-name: ${{ env.AI_CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.AI_ECR_REPOSITORY }}:${{ github.sha }}
+
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          task-definition: ${{ steps.render-ai.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
