@@ -26,3 +26,15 @@ class Extractor(Protocol):
         provider/transport failures, which the route maps to a 5xx.
         """
         ...
+
+
+class ExtractorError(Exception):
+    """
+    Raised by an Extractor implementation on a genuine provider/transport
+    failure (auth, timeout, rate limit, malformed/unparseable output) — never
+    for "nothing found in the text", which is a valid empty result instead.
+
+    routes.py maps this to a 503, so from the Kotlin side an ai-service
+    failure looks the same regardless of cause: QuickAddService already
+    treats any 5xx from /extract as AiServiceUnavailableException.
+    """
