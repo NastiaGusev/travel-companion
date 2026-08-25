@@ -24,7 +24,7 @@ def make_extractor() -> GeminiExtractor:
     # Client construction makes no network call, so a fake key is safe here.
     return GeminiExtractor(
         api_key="test-key",
-        model="gemini-2.5-flash-lite",
+        model="gemini-3.5-flash-lite",
         timeout_seconds=15.0,
         max_output_tokens=1024,
     )

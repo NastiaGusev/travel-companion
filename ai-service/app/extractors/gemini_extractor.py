@@ -32,6 +32,7 @@ Rules:
 - If nothing extractable is in the text, return {"days": []}.
 - For each stop, `search_query` is a short string suitable for a Google Places search (e.g. a landmark or restaurant name, optionally with a city). `name` is a human-readable label for display — usually the same as search_query.
 - `time_hint` is optional: a clock time like "12:30", one of "morning"/"afternoon"/"evening", or omitted entirely when the text implies no time.
+- Map meal words to a slot when no clock time is given: breakfast -> morning, lunch -> afternoon, dinner -> evening. Never use the meal word itself (e.g. "dinner") as time_hint.
 - Never invent stops, locations, or times that are not implied by the text.
 """
 
