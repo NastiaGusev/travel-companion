@@ -1,15 +1,28 @@
 """
-Contract + behavior tests for the extraction service (uses the stub extractor).
+Contract + behavior tests for the extraction service.
 
-These never touch a real LLM — they pin the HTTP contract shape and input
-validation, exactly what the Kotlin WireMock stubs will mirror.
+These force the stub extractor via a dependency override, so they pin the
+HTTP contract shape and input validation regardless of what EXTRACTOR_PROVIDER
+happens to be set to locally — this file's own claim of "never touches a real
+LLM" used to depend on the ambient .env, which is exactly what broke earlier
+when .env was left on "gemini". Now it's actually guaranteed by the test.
 """
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.extractors.factory import get_extractor
+from app.extractors.stub import StubExtractor
 from app.main import app
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def force_stub_extractor():
+    app.dependency_overrides[get_extractor] = lambda: StubExtractor()
+    yield
+    app.dependency_overrides.clear()
 
 
 def test_health():
