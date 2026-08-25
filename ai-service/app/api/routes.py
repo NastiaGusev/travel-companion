@@ -37,6 +37,7 @@ async def extract(
     Extract structured stops from free text.
 
     Returns 200 with { "days": [] } when nothing is found (not an error).
-    Genuine provider failures surface as 5xx (handled once a real provider lands).
+    Genuine provider failures raise ExtractorError, mapped to 503 by the handler
+    registered in main.py.
     """
     return await extractor.extract(request.text)
