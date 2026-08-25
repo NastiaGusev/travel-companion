@@ -2,9 +2,9 @@
 Configuration, entirely env-driven — same philosophy as the Kotlin service
 (secrets and provider choice come from the environment, never hardcoded).
 
-For the skeleton only `extractor_provider` matters (defaults to "stub").
-The LLM fields are here so the seam is ready; they stay unset until a real
-provider is wired.
+`extractor_provider` picks the implementation ("stub" or "gemini"). The LLM
+fields are unset until GEMINI_API_KEY is provided; timeout/max-tokens are
+guardrails so a slow/runaway call can't stall past Kotlin's own retry budget.
 """
 
 from __future__ import annotations
@@ -21,7 +21,12 @@ class Settings(BaseSettings):
     # Reserved for a real provider (unused by the stub). Never hardcode a real
     # value — supply via env / secrets manager, mirroring the Kotlin approach.
     llm_api_key: Optional[str] = None
-    llm_model: Optional[str] = None
+    llm_model: str = "gemini-2.5-flash-lite"
+
+    # Guardrails on the LLM call so a slow/hung request can't outlast Kotlin's
+    # own Resilience4j retry+circuit-breaker budget on /extract.
+    llm_timeout_seconds: float = 15.0
+    llm_max_output_tokens: int = 1024
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
