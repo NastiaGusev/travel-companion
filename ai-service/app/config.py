@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     # Guardrails on the LLM call so a slow/hung request can't outlast Kotlin's
     # own Resilience4j retry+circuit-breaker budget on /extract.
-    llm_timeout_seconds: float = 15.0
+    llm_timeout_seconds: float = 10.0
     llm_max_output_tokens: int = 1024
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
