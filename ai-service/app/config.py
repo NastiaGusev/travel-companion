@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Reserved for a real provider (unused by the stub). Never hardcode a real
     # value — supply via env / secrets manager, mirroring the Kotlin approach.
     llm_api_key: Optional[str] = None
-    llm_model: str = "gemini-3.5-flash-lite"
+    llm_model: str = "gemini-3.6-flash"
 
     # Guardrails on the LLM call so a slow/hung request can't outlast Kotlin's
     # own Resilience4j retry+circuit-breaker budget on /extract.

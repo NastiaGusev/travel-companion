@@ -134,6 +134,16 @@ jobs:
             end
           ' task-def.json > task-def-tmp.json && mv task-def-tmp.json task-def.json
 
+      - name: Ensure ai-service extractor config is up to date
+        run: |
+          jq '
+            .containerDefinitions |= map(
+              if .name == "${{ env.AI_CONTAINER_NAME }}" then
+                .environment = ((.environment // []) | map(select(.name != "EXTRACTOR_PROVIDER" and .name != "LLM_MODEL")) + [{"name": "EXTRACTOR_PROVIDER", "value": "gemini"}, {"name": "LLM_MODEL", "value": "gemini-3.6-flash"}])
+              else . end
+            )
+          ' task-def.json > task-def-tmp.json && mv task-def-tmp.json task-def.json
+
       - name: Ensure app points at ai-service
         run: |
           jq '
