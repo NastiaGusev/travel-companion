@@ -39,9 +39,27 @@ jobs:
           name: test-report
           path: build/reports/tests/test/
 
+  ai-service-test:
+    name: Run ai-service tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: ai-service/requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: pytest -v
+
   deploy:
     name: Build and deploy
-    needs: test
+    needs: [test, ai-service-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-24.04-arm
     steps:
@@ -114,6 +132,16 @@ jobs:
                 }
               }]
             end
+          ' task-def.json > task-def-tmp.json && mv task-def-tmp.json task-def.json
+
+      - name: Ensure ai-service extractor config is up to date
+        run: |
+          jq '
+            .containerDefinitions |= map(
+              if .name == "${{ env.AI_CONTAINER_NAME }}" then
+                .environment = ((.environment // []) | map(select(.name != "EXTRACTOR_PROVIDER" and .name != "LLM_MODEL")) + [{"name": "EXTRACTOR_PROVIDER", "value": "gemini"}, {"name": "LLM_MODEL", "value": "gemini-3.6-flash"}])
+              else . end
+            )
           ' task-def.json > task-def-tmp.json && mv task-def-tmp.json task-def.json
 
       - name: Ensure app points at ai-service

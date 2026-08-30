@@ -23,6 +23,8 @@ services:
       - "8000:8000"
     environment:
       EXTRACTOR_PROVIDER: ${EXTRACTOR_PROVIDER:-stub}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gemini-3.6-flash}
 
   app:
     build: .
