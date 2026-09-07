@@ -31,6 +31,15 @@ Starts the app, AI service, and Postgres together.
 - API: http://localhost:8080 — Swagger: http://localhost:8080/swagger-ui.html
 - Register/login via `/api/auth`, then **Authorize** in Swagger with the returned token.
 
+## Frontend
+A React + TypeScript SPA lives in `frontend/` (separate from this backend). To run it against the backend above:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open http://localhost:5173 — Vite proxies `/api/*` to the backend on port 8080, so no CORS setup is needed locally. See `frontend/README.md` for full details (production build, deploying separately, etc).
+
 ## Testing
 ```bash
 ./gradlew test
