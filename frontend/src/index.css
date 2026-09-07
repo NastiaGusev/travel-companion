@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-cream text-ink;
+}
+
+/* Safety net: native form controls (esp. date/time on iOS) can otherwise
+   render wider than their container and push the page or a modal sideways. */
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+/* iOS Safari renders date/time inputs with a fixed native control width
+   that ignores width:100%/max-width — the same fixed width shows up
+   whether the field is empty or filled, which is what makes it visibly
+   overflow past its container. Turning off the native appearance makes it
+   a normal styleable box that actually respects the CSS width, while the
+   tap-to-open wheel picker keeps working. */
+input[type='date'],
+input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
